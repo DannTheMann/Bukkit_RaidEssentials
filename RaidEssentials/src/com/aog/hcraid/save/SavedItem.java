@@ -19,8 +19,8 @@ public class SavedItem implements Serializable{
 	private int amount;
 	private short durability;
 	private Material itemType;
-	private String name;
-	private List<String> lore;
+	public String name;
+	public List<String> lore;
 	private Byte data;
 	private HashMap<Integer, Integer> enchantments = new HashMap<Integer, Integer>(); // KEY = EnchantmentID, Value = LEVEL
 	private ColourArmour colour;

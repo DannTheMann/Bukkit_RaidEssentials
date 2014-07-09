@@ -1,5 +1,9 @@
 package com.aog.hcraid.save;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -7,6 +11,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import com.aog.hcraid.Raid;
 import com.aog.hcraid.Util;
 
 public class ExchangeItem extends SavedItem{
@@ -33,8 +38,8 @@ public class ExchangeItem extends SavedItem{
 		this.sellingCost = sellingCost;
 		this.id = id;
 		this.addedDate = System.currentTimeMillis() / 1000;
-		this.removalDate = Util.getFutureDateInSeconds(7) + System.currentTimeMillis() / 1000;
-		this.rarity = Util.getWeaponRarity(is);
+		this.removalDate = Raid.UTIL.getFutureDateInSeconds(7) + System.currentTimeMillis() / 1000;
+		this.rarity = Raid.UTIL.getWeaponRarity(is);
 	}
 	
 	private String uuidSeller;
@@ -52,9 +57,9 @@ public class ExchangeItem extends SavedItem{
 	public void retract(){
 		Player p = Bukkit.getPlayer(UUID.fromString(uuidSeller));
 		if(p != null){
-			Util.returnItem(toBukkitItemStack(), p);
+			Raid.UTIL.returnItem(toBukkitItemStack(), p);
 		}else{
-			Util.returnItemToOfflinePlayer(toBukkitItemStack(), uuidSeller);
+			Raid.UTIL.returnItemToOfflinePlayer(toBukkitItemStack(), uuidSeller);
 		}
 	}
 	
@@ -91,5 +96,27 @@ public class ExchangeItem extends SavedItem{
 	public int getSellingId() {
 		return id;
 	}
+
+	public ItemStack toInformativeItemStack() {
+		
+		ItemStack is = toBukkitItemStack();
+		
+		final SimpleDateFormat sdf = new SimpleDateFormat("EEEE, MMMM d, yyyy h:mm a");
+		
+		
+		Raid.UTIL.loreOverwriteItem(is, new ArrayList<String>(){
+			private static final long serialVersionUID = -6544708637013746249L;
+		{
+			add("Selling Price: " + getTradingTranslation());
+			add("Removal date: " + sdf.format(new Date(removalDate*1000)));
+			add("Index Value: " + id);
+			add("Sold by: " + Bukkit.getPlayer(UUID.fromString(uuidSeller)).getName());
+			add("Seller ID: " + uuidSeller);
+		}});
+		return is;
+		
+	}
+	
+	public int getIndexValue() { return id; }
 
 }

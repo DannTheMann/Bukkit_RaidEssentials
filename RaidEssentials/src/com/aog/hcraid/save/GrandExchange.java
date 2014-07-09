@@ -2,11 +2,14 @@ package com.aog.hcraid.save;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import com.aog.hcraid.Raid;
 import com.aog.hcraid.Util;
 
 public class GrandExchange implements Serializable{
@@ -28,7 +31,7 @@ public class GrandExchange implements Serializable{
 		ItemStack[] itemstack = new ItemStack[items.length];
 		
 		for(int i = 0; i < itemstack.length; i++){
-			itemstack[i] = Util.createExchangeItem(items[i]);
+			itemstack[i] = Raid.UTIL.createExchangeItem(items[i]);
 		}
 		
 		return itemstack;
@@ -86,7 +89,7 @@ public class GrandExchange implements Serializable{
 		ItemStack[] itemstack = new ItemStack[list.length];
 		
 		for(int i = 0; i < itemstack.length; i++){
-			itemstack[i] = Util.createExchangeItem(list[i]);
+			itemstack[i] =  Raid.UTIL.createExchangeItem(list[i]);
 		}
 		
 		return itemstack;
@@ -120,7 +123,7 @@ public class GrandExchange implements Serializable{
 		ItemStack[] itemstack = new ItemStack[items.length];
 		
 		for(int i = 0; i < itemstack.length; i++){
-			itemstack[i] = Util.createExchangeItem(items[i]);
+			itemstack[i] =  Raid.UTIL.createExchangeItem(items[i]);
 		}
 		
 		return itemstack;
@@ -135,6 +138,62 @@ public class GrandExchange implements Serializable{
 			gei = new GrandExchangeItem();
 		
 		gei.addItemToExchange(itemInHand, uuid, totalPointsForCurrency, false);
+		
+	}
+	
+	public boolean removeItemFromExchange(ExchangeItem ei){
+		
+		GrandExchangeItem gei =  itemsForSale.get(ei.getItemType());
+		
+		if(gei != null){
+		
+			return gei.withdrawItem(ei.getSellerId(), ei.getIndexValue());
+		
+		}
+		
+		return false;
+	}
+	
+	public ItemStack purchaseItemFromExchange(ExchangeItem ei){
+		
+		GrandExchangeItem gei =  itemsForSale.get(ei.getItemType());
+		
+		gei.removeExchangeItem(ei);
+		
+		return ei.toBukkitItemStack();
+		
+	}
+
+	public ArrayList<ExchangeItem> getPlayerItems(Player p) {
+		
+		ArrayList<ExchangeItem> is = new ArrayList<ExchangeItem>();
+		
+		for(GrandExchangeItem gei : itemsForSale.values()){
+			
+			Collection<ArrayList<ExchangeItem>> i = gei.getAllTrades();
+			
+			for(ArrayList<ExchangeItem> ar : i){
+				
+				for(ExchangeItem ei : ar){
+					
+					if(ei.getSellerId() == Raid.UTIL.getUUID(p)){
+						is.add(ei);
+					}
+					
+				}
+				
+			}
+			
+		}
+		return is;
+		
+	}
+
+	public ExchangeItem getExchangeItem(String uuid, int indexPosition, Material material) {
+		
+		GrandExchangeItem gei = itemsForSale.get(material);
+		
+		return gei.getItemFromUUID(uuid, indexPosition);
 		
 	}
 }

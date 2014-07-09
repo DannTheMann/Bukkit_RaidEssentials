@@ -7,7 +7,6 @@ import com.aog.hcraid.save.GrandExchange;
 public class Raid extends JavaPlugin{
 
 	public static final Util UTIL = new Util();
-	public static GrandExchange ge;
 	
 	public void onEnable(){
 		UTIL.load(this);
@@ -18,7 +17,6 @@ public class Raid extends JavaPlugin{
 	}
 
 	public static void log(String string) {
-	
 		System.out.println("[Raid Essentials] " + string);
 	}
 	

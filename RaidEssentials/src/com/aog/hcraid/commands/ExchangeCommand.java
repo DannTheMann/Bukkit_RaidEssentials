@@ -1,16 +1,22 @@
 package com.aog.hcraid.commands;
 
+import java.util.ArrayList;
+
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import com.aog.hcraid.Raid;
 import com.aog.hcraid.Util;
+import com.aog.hcraid.save.ExchangeItem;
 import com.aog.hcraid.save.GrandExchange;
+import com.aog.hcraid.save.HCPlayer;
 import com.aog.hcraid.save.WeaponRarity;
 
 public class ExchangeCommand implements CommandExecutor{
@@ -73,9 +79,9 @@ public class ExchangeCommand implements CommandExecutor{
 				
 				e.addItemToExchange(p.getItemInHand(), Raid.UTIL.getTotalPointsForCurrency(totalGold, totalSilver, totalBronze), p.getUniqueId().toString());
 				
-			}else if(a1.equalsIgnoreCase("check")){
+			}else if(a1.equalsIgnoreCase("check") || a1.equalsIgnoreCase("buy") || a1.equalsIgnoreCase("get")){
 				
-				if(a2 == ""){
+				if(a2 != ""){
 					
 					WeaponRarity wr = getWeaponRarity(a2, a3);
 					Material m = getMaterialFromString(a2, a3);
@@ -119,15 +125,123 @@ public class ExchangeCommand implements CommandExecutor{
 				
 				// List their items on the exchange
 				
+				GrandExchange ge = Raid.UTIL.getRaidData().getExchange();
+				
+				ArrayList<ExchangeItem> is = ge.getPlayerItems(p);
+				
+				if(is.isEmpty()){
+					p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "You have no items listed on the Grand Exchange.");
+					return true;
+				}
+				
+				Inventory inv = Bukkit.createInventory(null, 53, 
+						ChatColor.DARK_RED + "Your Items on the GE, [Total " + is.size() + "]");
+				
+				laceInventory(inv);
+				
+				for(ExchangeItem ei : is){
+					
+					inv.addItem(ei.toInformativeItemStack());
+					
+				}
+				
+				HCPlayer hp = Raid.UTIL.getPlayer(p);
+				hp.getManagement().setLookingAtOwnListedItems(true);
+				p.openInventory(inv);
+				
+				
+				
 			}else if(a1.equalsIgnoreCase("remove") || (a1.equalsIgnoreCase("rem"))){
 				
-				// Remove one of their items from the exchange
+				// Display an inventory, let them right-click to remove items from the GE, once they're
+				// removed add those items to a list and wait until the inventory gets closed to return items.
 				
+				GrandExchange ge = Raid.UTIL.getRaidData().getExchange();
+				
+				ArrayList<ExchangeItem> is = ge.getPlayerItems(p);
+				
+				if(is.isEmpty()){
+					p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "You have no items listed on the Grand Exchange to remove.");
+					return true;
+				}
+				
+				Inventory inv = Bukkit.createInventory(null, 53, 
+						ChatColor.DARK_RED + "Your Items on the GE, [Total " + is.size() + "]");
+				
+				laceInventory(inv);
+				
+				for(ExchangeItem ei : is){
+					
+					inv.addItem(ei.toInformativeItemStack());
+					
+				}
+				
+				HCPlayer hp = Raid.UTIL.getPlayer(p);
+				hp.getManagement().setLookingAtRemovingItems(true);
+				p.openInventory(inv);
+				
+				/*
+				 
+				if(a2 != ""){
+				
+					int id = 0;
+					int indexValue = -99;
+					
+					try{
+						id = Integer.parseInt(a2);
+					}catch(NumberFormatException nfe){
+						p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "You must specify the Item Id to remove.");
+						p.sendMessage(ChatColor.GRAY + " - /ge rem <itemId> - Removes all items of this ID.");
+						p.sendMessage(ChatColor.GRAY + " - /ge rem <itemId> <index value> - Removes the " +
+								"item of this ID under this index value.");
+						return true;
+					}
+					
+					if(a3 != ""){
+						try{
+							indexValue = Integer.parseInt(a3);
+						}catch(NumberFormatException nfe){
+							p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "You must specify the Index Value to remove this item.");
+							p.sendMessage(ChatColor.GRAY + " - /ge rem <itemId> - Removes all items of this ID.");
+							p.sendMessage(ChatColor.GRAY + " - /ge rem <itemId> <index value> - Removes the " +
+									"item of this ID under this index value.");
+							p.sendMessage(ChatColor.GRAY + " To see Index Values, do /ge list");
+							return true;
+						}
+					}
+					
+					GrandExchange ge = Raid.UTIL.getRaidData().getExchange();
+				
+					ArrayList<ExchangeItem> is = ge.getPlayerItems(p);
+					
+					for(ExchangeItem ei : is){
+						
+						
+						
+					}
+				
+				}else{
+					p.sendMessage(EXCHANGE_PREFIX + ChatColor.YELLOW + "Remove an item listed on the Grand Exchange.");
+					p.sendMessage(ChatColor.GRAY + " - /ge rem <itemId> - Removes all items of this ID.");
+					p.sendMessage(ChatColor.GRAY + " - /ge rem <itemId> <index value> - Removes the " +
+							"item of this ID under this index value.");
+				}
+				
+				
+				 */
 			}
 			
 		}
 		
 		return false;
+	}
+
+	private void laceInventory(Inventory inv) {
+		ItemStack is = Raid.UTIL.nameItemStack(Raid.UTIL.loreItemStack(
+				new ItemStack(Material.GOLD_INGOT, 1), "Left-Click to go back a page. " +
+						"\n Right-Click to go forward a page."), "Page: 1");
+		
+		inv.setItem(53, is);
 	}
 
 	private WeaponRarity getWeaponRarity(String a2, String a3){

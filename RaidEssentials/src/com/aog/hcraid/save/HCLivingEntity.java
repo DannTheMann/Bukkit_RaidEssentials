@@ -8,9 +8,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 
-import com.aog.hcraid.Raid;
-
-
 public class HCLivingEntity implements Serializable{
 
 	

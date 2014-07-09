@@ -12,7 +12,6 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import com.aog.hcraid.Raid;
-import com.aog.hcraid.Util;
 
 public class GrandExchangeItem implements Serializable{
 
@@ -45,7 +44,7 @@ public class GrandExchangeItem implements Serializable{
 		 
 		 items.remove(item);
 		
-		Util.returnItem(item.toBukkitItemStack(), Bukkit.getPlayer(UUID.fromString(item.getSellerId())));
+		 Raid.UTIL.returnItem(item.toBukkitItemStack(), Bukkit.getPlayer(UUID.fromString(item.getSellerId())));
 		
 		return true;
 		
@@ -186,6 +185,29 @@ public class GrandExchangeItem implements Serializable{
 		}
 		
 		return response;
+	}
+
+	public ExchangeItem getItemFromUUID(String uuid, int indexPosition) {
+		
+		ArrayList<ExchangeItem> items = playerTrade.get(uuid);
+		
+		if(items == null){
+			return null;
+		}
+		
+		ExchangeItem item = getExchangeItemById(indexPosition, items);
+		
+		if(item == null){
+			return null;
+		}
+		
+		return item;
+	}
+
+	public void removeExchangeItem(ExchangeItem ei) {
+		
+		playerTrade.get(ei.getSellerId()).remove(ei);
+		
 	}
 
 }

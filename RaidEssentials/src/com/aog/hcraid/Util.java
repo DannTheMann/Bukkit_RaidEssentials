@@ -38,7 +38,7 @@ public class Util {
 		
 	}
 
-	public static void nameItem(ItemStack itemstack, String generateName) {
+	public void nameItem(ItemStack itemstack, String generateName) {
 		
 		ItemMeta im = itemstack.getItemMeta();
 		im.setDisplayName(generateName);
@@ -46,17 +46,27 @@ public class Util {
 		
 	}
 
-	public static void loreItem(ItemStack itemstack, String string) {
+	/**
+	 * Overwrite existing lore using an Array.
+	 * @param itemstack
+	 * @param arrayList
+	 */
+	public void loreOverwriteItem(ItemStack itemstack, ArrayList<String> arrayList) {
 		
 		ItemMeta im = itemstack.getItemMeta();
-		ArrayList<String> lore = new ArrayList<>();
-		lore.add(string);
-		im.setLore(lore);
+		
+		ArrayList<String> clone = new ArrayList<String>();
+		
+		for(String u : arrayList){
+			clone.add(ChatColor.RESET + "" + ChatColor.GRAY + u);
+		}
+		
+		im.setLore(clone);
 		itemstack.setItemMeta(im);
 		
 	}
 
-	public static void returnItem(ItemStack bukkitItemStack, Player p) {
+	public void returnItem(ItemStack bukkitItemStack, Player p) {
 		
 		if(bukkitItemStack == null || p == null){
 			return;
@@ -75,15 +85,15 @@ public class Util {
 		
 	}
 
-	public static long getFutureDateInSeconds(int i) {		
+	public long getFutureDateInSeconds(int i) {		
 		return 86400 * i;		
 	}
 	
-	public static long getFutureDateInMilliseconds(int i) {		
+	public long getFutureDateInMilliseconds(int i) {		
 		return (86400 * i) * 1000;		
 	}
 
-	public static WeaponRarity getWeaponRarity(ItemStack is) {
+	public WeaponRarity getWeaponRarity(ItemStack is) {
 		
 		String item = getItemStackName(is);
 		
@@ -102,7 +112,7 @@ public class Util {
 		return WeaponRarity.NOTHING;
 	}
 
-	public static String getItemStackName(ItemStack is) {
+	public String getItemStackName(ItemStack is) {
 	
 		if(is != null && is.getItemMeta() != null){
 			
@@ -115,21 +125,21 @@ public class Util {
 		
 	}
 
-	public static ItemStack nameItemStack(ItemStack is, String name) {
+	public ItemStack nameItemStack(ItemStack is, String name) {
 		ItemMeta im = is.getItemMeta();
 		im.setDisplayName(name);
 		is.setItemMeta(im);
 		return is;
 	}
 	
-	public static ItemStack nameItemStack(ItemStack is, char a) {
+	public ItemStack nameItemStack(ItemStack is, char a) {
 		ItemMeta im = is.getItemMeta();
 		im.setDisplayName(ChatColor.RESET + "" + a);
 		is.setItemMeta(im);
 		return is;		
 	}
 
-	public static ItemStack loreItemStack(ItemStack is, String line) {
+	public ItemStack loreItemStack(ItemStack is, String line) {
 		List<String> list = null;
 		if(is.getItemMeta().getLore() == null)
 			list = new ArrayList<String>();
@@ -154,25 +164,25 @@ public class Util {
 		return is;
 	}
 	
-	public static void returnItemToOfflinePlayer(ItemStack bukkitItemStack,
+	public void returnItemToOfflinePlayer(ItemStack bukkitItemStack,
 			String uuidSeller) {
 		
 		Raid.UTIL.players.get(uuidSeller).addItemToReturn(bukkitItemStack);
 		
 	}
 
-	public static ItemStack createExchangeItem(ExchangeItem exchangeItem) {
+	public ItemStack createExchangeItem(ExchangeItem exchangeItem) {
 		
 		ItemStack is = exchangeItem.toBukkitItemStack();
 		
-		loreItem(is, "");
-		loreItem(is, "Being Sold By: " + getPlayerName(exchangeItem.getSellerId()));
-		loreItem(is, exchangeItem.getTradingTranslation());
+		//loreItem(is, "");
+		//loreItem(is, "Being Sold By: " + getPlayerName(exchangeItem.getSellerId()));
+		//loreItem(is, exchangeItem.getTradingTranslation());
 		
 		return null;
 	}
 
-	private static String getPlayerName(String sellerId) {
+	private String getPlayerName(String sellerId) {
 		
 		Player p = Bukkit.getPlayer(UUID.fromString(sellerId));
 		
@@ -243,6 +253,10 @@ public class Util {
 			}
 		}	
 		Raid.log("Saved all player files.");
+	}
+
+	public HCPlayer getPlayer(Player p) {
+		return players.get(getUUID(p));
 	}
 
 }

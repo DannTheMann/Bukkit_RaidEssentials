@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 
+import com.aog.hcraid.Raid;
 import com.aog.hcraid.Util;
 
 public class WeaponGeneratorAPI {
@@ -77,8 +78,8 @@ public class WeaponGeneratorAPI {
 			
 		}
 		
-		Util.nameItem(itemstack, wr.name() + " " + generateName(drop));
-		Util.loreItem(itemstack, ChatColor.GRAY + "A " + wr + " weapon.");
+		 Raid.UTIL.nameItem(itemstack, wr.name() + " " + generateName(drop));
+		 Raid.UTIL.loreItemStack(itemstack, ChatColor.GRAY + "A " + wr + " weapon.");
 		
 		return itemstack;
 		
