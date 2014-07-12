@@ -2,7 +2,9 @@ package com.aog.hcraid.save;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -19,9 +21,11 @@ public class HCPlayer implements Serializable {
 	private GruntRank gruntPlus;
 	private ArrayList<ExchangeItem> itemsBeingSold = new ArrayList<>();
 	private ArrayList<SavedItem> itemsToReturn = new ArrayList<SavedItem>();
+	private int moneyToWithdraw;
 
 	public HCPlayer(Player p){
 		Raid.UTIL.getUUID(p);
+		uniqueId = p.getUniqueId().toString();
 		gruntPlus = new GruntRank(p.getFirstPlayed());
 		management = new ExchangeManagement();
 	}
@@ -36,6 +40,7 @@ public class HCPlayer implements Serializable {
 	
 	public void addItemForSale(ExchangeItem ei){
 		itemsBeingSold.add(ei);
+		Raid.log("Added item for '" + Bukkit.getPlayer(UUID.fromString(uniqueId)).getName() + "'. Total Items being sold = " + itemsBeingSold.size());
 	}
 	
 	public void removeItemForSale(ExchangeItem ei){
@@ -68,6 +73,14 @@ public class HCPlayer implements Serializable {
 		this.management = management;
 	}
 
+	public void addMoneyToWithdraw(int money) {
+		moneyToWithdraw += money;
+	}
+	
+	public int getMoneyToWithdraw(){
+		return moneyToWithdraw;
+	}
+	
 	/*
 	public boolean isLookingAtOwnListedItems() {
 		return lookingAtOwnListedItems;

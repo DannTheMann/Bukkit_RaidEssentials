@@ -31,19 +31,23 @@ public class GrandExchangeItem implements Serializable{
 		ArrayList<ExchangeItem> items = playerTrade.get(uuid);
 		
 		if(items == null){
+			Raid.log("Items is false - " + uuid);
 			return false;
 		}
 		
 		ExchangeItem item = getExchangeItemById(itemId, items);
 		
 		if(item == null){
+			Raid.log("Item is false");
 			return false;
 		}
 		
-		 Raid.UTIL.players.get(uuid).removeItemForSale(item);
+		 Raid.UTIL.getRaidData().getPlayers().get(uuid).removeItemForSale(item);
 		 
 		 items.remove(item);
 		
+		 item.setSold();
+		 
 		 Raid.UTIL.returnItem(item.toBukkitItemStack(), Bukkit.getPlayer(UUID.fromString(item.getSellerId())));
 		
 		return true;
@@ -81,6 +85,11 @@ public class GrandExchangeItem implements Serializable{
 		
 		int pos1 =0;
 		int pos2 = pos1+1;
+		
+		if(list.length <= pos2){
+			// Checks to see if the list has only one item.
+			return list;
+		}
 		
 		for(int i = 0; i < list.length * list.length; i++){
 			
@@ -134,19 +143,33 @@ public class GrandExchangeItem implements Serializable{
 		
 		ArrayList<ExchangeItem> items = playerTrade.get(uuid);
 		
-		if(item == null){
-			items = new ArrayList<>();
+		if(items == null){
+			items = new ArrayList<ExchangeItem>();
 		}
 		
 		if(cantSell(item.getType())){
 			return ChatColor.DARK_RED + "You can't sell " + item.getType().toString().toLowerCase().replaceAll("_", " ");
 		}
+
+		ExchangeItem exch 
 		
-		ExchangeItem exch = new ExchangeItem(item, uuid, admin, askingPrice, getID(items));
+		= new ExchangeItem(item, uuid, admin, askingPrice, getID(items));
 		
 		items.add(exch);
 		
-		Raid.UTIL.players.get(uuid).addItemForSale(exch);
+		if(Raid.UTIL.getRaidData() == null){
+			Raid.log("Raid data == null");
+		}
+		if(Raid.UTIL.getRaidData().getPlayers() == null){
+			Raid.log("Raid Players is null");
+		}
+		
+		Raid.UTIL.getRaidData().getPlayers().get(uuid).addItemForSale(exch);
+		
+		playerTrade.put(uuid, items);
+		
+		Raid.log(uuid);
+		Raid.log("Added item to GE for user ID '" + Bukkit.getPlayer(UUID.fromString(uuid)).getName() + "'.");
 		
 		return ChatColor.DARK_BLUE + "Added the item " + exch.toString();
 	}

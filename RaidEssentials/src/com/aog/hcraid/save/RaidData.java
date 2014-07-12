@@ -6,7 +6,8 @@ import java.util.HashMap;
 
 import org.bukkit.entity.LivingEntity;
 
-import serial_file.SaveData;
+import com.aog.hcraid.serial_file.SaveData;
+
 
 public class RaidData implements Serializable{
 	
@@ -20,6 +21,12 @@ public class RaidData implements Serializable{
 	
 	private transient ArrayList<LivingEntity> enemies = new ArrayList<>();
 	
+	public RaidData() {
+		players = new HashMap<String, HCPlayer>();
+		bosses = new ArrayList<HCBoss>();
+		exchange = new GrandExchange();
+	}
+	
 	public void reload(){
 		enemies = new ArrayList<>();
 	}
@@ -31,6 +38,15 @@ public class RaidData implements Serializable{
 	public void save(){
 		SaveData.saveRaidData(this);
 	}
+
+	public HashMap<String, HCPlayer> getPlayers() {
+		return players;
+	}
+
+	public ArrayList<HCBoss> getBosses() {
+		return bosses;
+	}
+
 	
 
 }

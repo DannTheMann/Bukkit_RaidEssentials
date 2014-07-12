@@ -44,6 +44,7 @@ public class ExchangeItem extends SavedItem{
 	
 	private String uuidSeller;
 	private boolean adminSale;
+	private boolean sold;
 	private int sellingCost;
 	
 	public boolean valid(){
@@ -84,8 +85,8 @@ public class ExchangeItem extends SavedItem{
 		int silverPoints = silver * SILVER_WORTH;
 		int bronze = testPoints - (goldPoints + silverPoints);
 		
-		return ChatColor.GOLD + "Gold: " + gold + ChatColor.GRAY + ", Silver: " + silver + 
-				 ChatColor.RED + ", Bronze: " + bronze;
+		return ChatColor.GOLD + "Gold: " + gold + ChatColor.AQUA + " Silver: " + silver + 
+				 ChatColor.RED + " Bronze: " + bronze;
 	}
 	
 	@Override
@@ -99,24 +100,41 @@ public class ExchangeItem extends SavedItem{
 
 	public ItemStack toInformativeItemStack() {
 		
-		ItemStack is = toBukkitItemStack();
+		final ItemStack is = toBukkitItemStack();
 		
 		final SimpleDateFormat sdf = new SimpleDateFormat("EEEE, MMMM d, yyyy h:mm a");
 		
+		if(rarity != WeaponRarity.NOTHING){
+			Raid.UTIL.nameItem(is, getName());
+		}
 		
 		Raid.UTIL.loreOverwriteItem(is, new ArrayList<String>(){
 			private static final long serialVersionUID = -6544708637013746249L;
 		{
+			
+			if( ! is.getEnchantments().isEmpty()){
+				add("");
+			}
+			
 			add("Selling Price: " + getTradingTranslation());
 			add("Removal date: " + sdf.format(new Date(removalDate*1000)));
 			add("Index Value: " + id);
 			add("Sold by: " + Bukkit.getPlayer(UUID.fromString(uuidSeller)).getName());
 			add("Seller ID: " + uuidSeller);
+			
 		}});
 		return is;
 		
 	}
 	
 	public int getIndexValue() { return id; }
+
+	public boolean isSold() {
+		return sold;
+	}
+	
+	public void setSold(){
+		sold = true;
+	}
 
 }

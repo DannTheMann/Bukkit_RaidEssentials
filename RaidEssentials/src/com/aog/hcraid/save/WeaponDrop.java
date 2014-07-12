@@ -18,24 +18,29 @@ public class WeaponDrop {
 		this.rarity = rare;
 		
 		Material[][] items = {{Material.DIAMOND_HELMET, Material.DIAMOND_CHESTPLATE
-			, Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS,
-			Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS
+			, Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS
+			, Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS
 			, Material.IRON_BOOTS},{Material.DIAMOND_SWORD, Material.DIAMOND_AXE
-			, Material.IRON_AXE, Material.IRON_SWORD},{Material.BOW}};
+			, Material.IRON_AXE, Material.IRON_SWORD, Material.IRON_HOE, Material.DIAMOND_HOE}
+			,{Material.BOW}};
 		
 		int validation = 0;
+		
+		flag:
 		
 		for(Material[] item : items){
 			
 			for(int i = 0; i < item.length; i++){
 				if(item[i] == type){
-					break;
+					break flag;
 				}
 			}
 			
 			validation++;
 			
 		}
+		
+		validEnchantments = new ArrayList<Enchantment>();
 		
 		switch(validation){
 		

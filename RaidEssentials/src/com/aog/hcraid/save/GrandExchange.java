@@ -10,7 +10,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import com.aog.hcraid.Raid;
-import com.aog.hcraid.Util;
 
 public class GrandExchange implements Serializable{
 
@@ -18,6 +17,16 @@ public class GrandExchange implements Serializable{
 	
 	private HashMap<Material, GrandExchangeItem> itemsForSale = new HashMap<>();
 
+	public GrandExchange(){
+		
+		for(Material m : Material.values()){
+			if(!itemsForSale.containsKey(m)){
+				itemsForSale.put(m, new GrandExchangeItem());
+			}
+		}
+		
+	}
+	
 	public ItemStack[] searchFor(Material m){
 		
 		GrandExchangeItem gei = itemsForSale.get(m);
@@ -31,7 +40,7 @@ public class GrandExchange implements Serializable{
 		ItemStack[] itemstack = new ItemStack[items.length];
 		
 		for(int i = 0; i < itemstack.length; i++){
-			itemstack[i] = Raid.UTIL.createExchangeItem(items[i]);
+			itemstack[i] = items[i].toInformativeItemStack();
 		}
 		
 		return itemstack;
@@ -68,7 +77,14 @@ public class GrandExchange implements Serializable{
 		int pos1 =0;
 		int pos2 = pos1+1;
 		
+		
+		
 		for(int i = 0; i < list.length * list.length; i++){
+			
+			if(list.length <= pos2){
+				// Checks to see if the list has only one item.
+				break;
+			}
 			
 			if(list[pos2].getSellingCost() < list[pos1].getSellingCost()){
 				ExchangeItem ei = list[pos1];
@@ -89,7 +105,7 @@ public class GrandExchange implements Serializable{
 		ItemStack[] itemstack = new ItemStack[list.length];
 		
 		for(int i = 0; i < itemstack.length; i++){
-			itemstack[i] =  Raid.UTIL.createExchangeItem(list[i]);
+			itemstack[i] =  list[i].toInformativeItemStack();
 		}
 		
 		return itemstack;
@@ -123,7 +139,7 @@ public class GrandExchange implements Serializable{
 		ItemStack[] itemstack = new ItemStack[items.length];
 		
 		for(int i = 0; i < itemstack.length; i++){
-			itemstack[i] =  Raid.UTIL.createExchangeItem(items[i]);
+			itemstack[i] =  items[i].toInformativeItemStack();
 		}
 		
 		return itemstack;
@@ -138,6 +154,8 @@ public class GrandExchange implements Serializable{
 			gei = new GrandExchangeItem();
 		
 		gei.addItemToExchange(itemInHand, uuid, totalPointsForCurrency, false);
+		
+		itemsForSale.put(itemInHand.getType(), gei);
 		
 	}
 	
@@ -160,6 +178,12 @@ public class GrandExchange implements Serializable{
 		
 		gei.removeExchangeItem(ei);
 		
+		ei.setSold();
+		
+		HCPlayer hp = Raid.UTIL.getPlayer(Raid.UTIL.getPlayer(ei.getSellerId()));
+		
+		hp.addMoneyToWithdraw(ei.getSellingCost());
+		
 		return ei.toBukkitItemStack();
 		
 	}
@@ -176,7 +200,7 @@ public class GrandExchange implements Serializable{
 				
 				for(ExchangeItem ei : ar){
 					
-					if(ei.getSellerId() == Raid.UTIL.getUUID(p)){
+					if(ei.getSellerId().equalsIgnoreCase(Raid.UTIL.getUUID(p))){
 						is.add(ei);
 					}
 					
@@ -195,5 +219,9 @@ public class GrandExchange implements Serializable{
 		
 		return gei.getItemFromUUID(uuid, indexPosition);
 		
+	}
+	
+	public HashMap<Material, GrandExchangeItem> getItems(){
+		return itemsForSale;
 	}
 }

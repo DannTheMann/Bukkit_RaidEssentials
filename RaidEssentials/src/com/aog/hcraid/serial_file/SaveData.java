@@ -1,4 +1,4 @@
-package serial_file;
+package com.aog.hcraid.serial_file;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -40,10 +40,10 @@ public class SaveData {
 		
 	      try
 	      {
-	    	  if(!new File(Raid.UTIL.getDirectory() + "funbocks.ser").exists())
+	    	  if(!new File(Raid.UTIL.getDirectory() + uuid + ".ser").exists())
 	    		  return new HCPlayer(Bukkit.getPlayer(UUID.fromString(uuid)));
 	    	  
-	         FileInputStream fileIn = new FileInputStream(Raid.UTIL.getDirectory() + "RaidData.ser");
+	         FileInputStream fileIn = new FileInputStream(Raid.UTIL.getDirectory() + uuid + ".ser");
 	         ObjectInputStream in = new ObjectInputStream(fileIn);
 	         data = (HCPlayer) in.readObject();
 	         in.close();
@@ -87,8 +87,10 @@ public class SaveData {
 		
 	      try
 	      {
-	    	  if(!new File(Raid.UTIL.getDirectory() + "RaidData.ser").exists())
+	    	  if(!new File(Raid.UTIL.getDirectory() + "RaidData.ser").exists()){
+	    		  Raid.log("Creating new Raid data.");
 	    		  return new RaidData();
+	    	  }
 	    	  
 	         FileInputStream fileIn = new FileInputStream(Raid.UTIL.getDirectory() + "RaidData.ser");
 	         ObjectInputStream in = new ObjectInputStream(fileIn);
@@ -96,6 +98,12 @@ public class SaveData {
 	         in.close();
 	         fileIn.close();
 	         Raid.log("Succesfully loaded 'RaidData' file.");
+	         
+	         if(data == null){
+	        	 Raid.log("Data was null! Creating a new RaidData object.");
+	    		  return new RaidData();
+	         }
+	         
 	         return data;
 	      }catch(IOException i){
 	         i.printStackTrace();

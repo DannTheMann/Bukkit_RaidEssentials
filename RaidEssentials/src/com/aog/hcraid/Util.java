@@ -2,7 +2,6 @@ package com.aog.hcraid;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,25 +13,85 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import serial_file.SaveData;
 
+import com.aog.hcraid.commands.DebugCommand;
+import com.aog.hcraid.commands.ExchangeCommand;
+import com.aog.hcraid.events.exchange.InventoryManagement;
+import com.aog.hcraid.events.exchange.PlayerConnectionEvents;
 import com.aog.hcraid.save.ExchangeItem;
 import com.aog.hcraid.save.HCPlayer;
 import com.aog.hcraid.save.RaidData;
 import com.aog.hcraid.save.WeaponRarity;
+import com.aog.hcraid.serial_file.SaveData;
 
 public class Util {
 	
 	private JavaPlugin plugin;
 	private RaidData raidData;
-	public HashMap<String, HCPlayer> players;
+	//public HashMap<String, HCPlayer> players;
 	
 	public void load(JavaPlugin plugin){
 		this.plugin = plugin;
-		players = new HashMap<>();
+		log("Loading plugin...");
+		//players = new HashMap<>();
+		
+		log("Checking directories...");
+		checkDirectory();
+		
 		raidData = SaveData.loadRaidDate();
+		
+		if(raidData.getExchange() == null){
+			raidData = new RaidData();
+		}
+		
+		log("Loaded Raid Data...");
+		registerEvents();
+		log("Registered Events...");
+		registerCommands();
+		log("Registered Commands...");
+		
+		log("Checking online players, adding non existing members.");
+		checkOnlinePlayers();
 	}
 	
+	private void checkOnlinePlayers() {
+		
+		for(Player p : Bukkit.getOnlinePlayers()){
+			
+			addPlayer(p);
+			
+		}
+		
+	}
+
+	private void checkDirectory() {
+		File f = new File(getDirectory());
+		if(!f.exists()){
+			log("Making data directory... - " + getDirectory() );
+			f.mkdirs();
+		}
+		f = new File(getPlayerDirectory());
+		if(!f.exists()){
+			log("Making player directory... - " + getPlayerDirectory());
+			f.mkdirs();
+		}
+	}
+
+	public void log(String string) {
+		System.out.println("[" + plugin.getServer().getPluginManager().getPlugin(plugin.getName()).getName() 
+				+ "] " + string);
+	}
+
+	private void registerCommands() {
+		plugin.getServer().getPluginCommand("ge").setExecutor(new ExchangeCommand());
+		plugin.getServer().getPluginCommand("rdebug").setExecutor(new DebugCommand());
+	}
+
+	private void registerEvents() {
+		plugin.getServer().getPluginManager().registerEvents(new InventoryManagement(), plugin);
+		plugin.getServer().getPluginManager().registerEvents(new PlayerConnectionEvents(), plugin);
+	}
+
 	public JavaPlugin getPlugin(){
 		return plugin;
 		
@@ -76,7 +135,7 @@ public class Util {
 			
 			if(i == null){
 				p.getInventory().addItem(bukkitItemStack);
-				break;
+				return;
 			}
 			
 		}
@@ -97,7 +156,9 @@ public class Util {
 		
 		String item = getItemStackName(is);
 		
-		if(item.startsWith(ChatColor.DARK_PURPLE + "*")){
+		if(item == null){
+			return WeaponRarity.NOTHING;
+		}else if(item.startsWith(ChatColor.DARK_PURPLE + "*")){
 			return WeaponRarity.LEGENDARY;
 		}else if(item.startsWith(ChatColor.LIGHT_PURPLE + "*")){
 			return WeaponRarity.HEROIC;
@@ -108,7 +169,6 @@ public class Util {
 		}else if(item.startsWith(ChatColor.AQUA + "*")){
 			return WeaponRarity.COMMON;
 		}
-		
 		return WeaponRarity.NOTHING;
 	}
 
@@ -167,12 +227,14 @@ public class Util {
 	public void returnItemToOfflinePlayer(ItemStack bukkitItemStack,
 			String uuidSeller) {
 		
-		Raid.UTIL.players.get(uuidSeller).addItemToReturn(bukkitItemStack);
+		Raid.UTIL.getRaidData().getPlayers().get(uuidSeller).addItemToReturn(bukkitItemStack);
 		
 	}
 
-	public ItemStack createExchangeItem(ExchangeItem exchangeItem) {
+	@Deprecated
+	public ItemStack createExchangeItemv(ExchangeItem exchangeItem) {
 		
+		@SuppressWarnings("unused")
 		ItemStack is = exchangeItem.toBukkitItemStack();
 		
 		//loreItem(is, "");
@@ -182,6 +244,7 @@ public class Util {
 		return null;
 	}
 
+	@SuppressWarnings("unused")
 	private String getPlayerName(String sellerId) {
 		
 		Player p = Bukkit.getPlayer(UUID.fromString(sellerId));
@@ -222,7 +285,7 @@ public class Util {
 
 	public int getTotalPointsForCurrency(int gold, int silver, int bronze){
 		
-		return gold + (silver *16) + (bronze * 256);
+		return (gold*256) + (silver *16) + bronze;
 		
 		
 	}
@@ -244,7 +307,14 @@ public class Util {
 		
 		Raid.log("Trying to save all player files.");
 		
-		for(HCPlayer player : players.values()){
+		if(getRaidData() == null)
+			Raid.log("Raid Data is null.");
+		
+		if(getRaidData().getPlayers() == null){
+			Raid.log("Players is null.");
+		}
+		
+		for(HCPlayer player : getRaidData().getPlayers().values()){
 			try{
 				SaveData.savePlayerFile(player);
 			}catch(Exception e){
@@ -256,7 +326,18 @@ public class Util {
 	}
 
 	public HCPlayer getPlayer(Player p) {
-		return players.get(getUUID(p));
+		return getRaidData().getPlayers().get(getUUID(p));
+	}
+
+	public void addPlayer(Player p) {
+		HCPlayer hp = raidData.getPlayers().get(p.getUniqueId().toString());
+		
+		if(hp == null){
+			raidData.getPlayers().put(p.getUniqueId().toString(), new HCPlayer(p));
+			log("Adding new player - '" + p.getUniqueId().toString() + "' (" + p.getName() + ") [PLAYER].");
+		}else{
+			log("Player '" + p.getName() + "' is already on the database.");
+		}
 	}
 
 }

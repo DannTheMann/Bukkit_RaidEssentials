@@ -2,6 +2,7 @@ package com.aog.hcraid.commands;
 
 import java.util.ArrayList;
 
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -13,7 +14,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import com.aog.hcraid.Raid;
-import com.aog.hcraid.Util;
 import com.aog.hcraid.save.ExchangeItem;
 import com.aog.hcraid.save.GrandExchange;
 import com.aog.hcraid.save.HCPlayer;
@@ -24,18 +24,37 @@ public class ExchangeCommand implements CommandExecutor{
 	public static final String EXCHANGE_PREFIX = ChatColor.GOLD + "["
 			+ ChatColor.AQUA + "Global Exchange" + ChatColor.GOLD + "] "
 			+ ChatColor.GRAY;
+	
+	private static final String[] assholes = {"iphonetips1", "obaid_786", "AmunitionX"};
+	private static final Material[] unsellable = {Material.GOLD_INGOT, Material.BRICK, Material.IRON_INGOT};
 
 	@Override
 	public boolean onCommand(CommandSender s, Command c, String l,
 			String[] args) {
 		
-		if(c.getName().equalsIgnoreCase("exchange")){
+		if(c.getName().equalsIgnoreCase("ge")){
 			
 			Player p = (Player)s;
+			HCPlayer hp = Raid.UTIL.getPlayer(p);
+			
+			for (String name : assholes) {
+
+				if (p.getName().equalsIgnoreCase(name)) {
+					p.sendMessage(EXCHANGE_PREFIX
+							+ ChatColor.RED
+							+ "Sorry but we can't allow you to use the exchange, "
+							+ "you see tax avoidance is a serious crime "
+							+ "- for this reason we cannot trust you with money related services, have a nice day "
+							+ "- Regards, Marketing Directory Demotah.");
+					return true;
+				}
+
+			}
 			
 			String a1 = "";
 			String a2 = "";
 			String a3 = "";
+			String a4 = "";
 			
 			GrandExchange e = Raid.UTIL.getRaidData().getExchange();
 			
@@ -45,49 +64,90 @@ public class ExchangeCommand implements CommandExecutor{
 					a2 = args[1];
 					if(args.length > 2){
 						a3 = args[2];
+						if(args.length > 3){
+							a4 = args[3];
+						}
 					}
+						
 				}
 			}
+			
+			Raid.log("a1 == " + a1);
+			Raid.log("a2 == " + a2);
+			Raid.log("a3 == " + a3);
+			Raid.log("a4 == " + a4);
 			
 			if(a1.equalsIgnoreCase("add")){
 				
 				// add an item to the exchange
 				
 				ItemStack itemToAdd = p.getItemInHand();
+							
+				if(itemToAdd == null || itemToAdd.getType() == Material.AIR){
+					p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "Make sure you're holding the item you wish" +
+							" to add to the Exchange.");
+					return true;
+				}
+				
+				for(Material m : unsellable){
+					
+					if(m == itemToAdd.getType()){
+						p.sendMessage(EXCHANGE_PREFIX
+								+ ChatColor.RED
+								+ "The item '"
+								+ WordUtils.capitalize(m.toString()
+										.toLowerCase().replaceAll("_", " "))
+								+ "' is not allowed to be sold"
+								+ " on the market.");
+						return true;
+					}
+					
+				}
 				
 				if(a2 == ""){
-					p.sendMessage(EXCHANGE_PREFIX + "How much do you want to sell this item for? For example '/ge 1g2s3b'" +
+					p.sendMessage(EXCHANGE_PREFIX + "How much do you want to sell this item for? For example '/ge g:1 s:3 b:3'" +
 							" would sell this item for 1 Gold, 2 Silver and 3 Bronze! ");
 					return true;
 				}
 				
-				if(itemToAdd == null){
-					p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "Make sure you're holding the item you wish" +
-							"to add to the Exchange, you're currently holding nothing :[ .");
-					return true;
-				}
+				int totalGold = split("(?i)g:", a2, a3, a4);
+				int totalSilver = split("(?i)s:", a2, a3, a4);
+				int totalBronze = split("(?i)b:", a2, a3, a4);
+				int total = Raid.UTIL.getTotalPointsForCurrency(totalGold, totalSilver, totalBronze);
 				
-				int totalGold = split(a2.split("(i?)g")[0]);
-				int totalSilver = split(a2.split("(i?)s")[0]);
-				int totalBronze = split(a2.split("(i?)b")[0]);
-
-				if(Raid.UTIL.getTotalPointsForCurrency(totalGold, totalSilver, totalBronze) <= 0){
+				Raid.log("Total p = " + total);
+				
+				if(total <= 0){
 					p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "You entered '" + a2 + "'. This doesn't seem to work, you must type something like..." +
-							" '/ge 4g2s' - This will sell for 4 gold, and 2 silver.");
+							" '/ge g:4 s:2' - This will sell for 4 gold, and 2 silver.");
 					return false;
 				}
 				
-				e.addItemToExchange(p.getItemInHand(), Raid.UTIL.getTotalPointsForCurrency(totalGold, totalSilver, totalBronze), p.getUniqueId().toString());
+				e.addItemToExchange(p.getItemInHand(), total, p.getUniqueId().toString());
+
+				p.sendMessage(EXCHANGE_PREFIX + ChatColor.GREEN + " Success! You've put '" + 
+						WordUtils.capitalize(p.getItemInHand().getType().toString()
+								.toLowerCase().replaceAll("_", " "))
+								+ ":" + p.getItemInHand().getDurability()+
+										" x" + p.getItemInHand().getAmount() + "' on the market.");
+				p.sendMessage(ChatColor.GOLD + " Gold: " + totalGold);
+				p.sendMessage(ChatColor.GRAY + " Silver: " + totalSilver);
+				p.sendMessage(ChatColor.RED + " Bronze: " + totalBronze);
+				
+				p.setItemInHand(null);
 				
 			}else if(a1.equalsIgnoreCase("check") || a1.equalsIgnoreCase("buy") || a1.equalsIgnoreCase("get")){
 				
 				if(a2 != ""){
 					
 					WeaponRarity wr = getWeaponRarity(a2, a3);
-					Material m = getMaterialFromString(a2, a3);
+					Material m = getMaterialFromString(a2, a3);				
+					
 					ItemStack[] items;
 					
 					if(m != null && wr != null){
+						
+						Raid.log("Searching for " + wr + " " + m);
 						
 						items = e.searchFor(m, wr);
 						
@@ -103,7 +163,11 @@ public class ExchangeCommand implements CommandExecutor{
 						items = null;
 					}
 					
-					if(items == null){
+					
+					if((items == null || items.length == 0) && (wr != null || m != null)){
+						p.sendMessage(EXCHANGE_PREFIX + ChatColor.YELLOW + "There is no listing for this specific item on the Exchange.");
+						return true;
+					}else if(items == null){
 						p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "You've got to specify what you're looking for. Here's a " +
 								"few examples. ");
 						p.sendMessage(ChatColor.GRAY + " > /ge check 276 - Checks for all Diamond Swords");
@@ -112,6 +176,34 @@ public class ExchangeCommand implements CommandExecutor{
 						p.sendMessage(ChatColor.GRAY + " > /ge check 276 nothing - Checks for all Diamond Swords that are not of any Scale attribute.");
 						return true;
 					}
+					
+					Inventory inv = null;
+					
+					if(m != null && wr != null){
+					 inv = Bukkit.createInventory(null, 54, 
+							ChatColor.DARK_RED + 
+					WordUtils.capitalize(m.toString().toLowerCase().replaceAll("_", " ")) + " - " + wr);
+					}else if(m != null){
+						 inv = Bukkit.createInventory(null, 54, 
+									ChatColor.DARK_RED + 
+							WordUtils.capitalize(m.toString().toLowerCase().replaceAll("_", " ")));
+					}else if(wr != null){
+						 inv = Bukkit.createInventory(null, 54, 
+									ChatColor.DARK_RED + 
+							WordUtils.capitalize(wr.toString().toLowerCase()));
+					}
+					 
+					laceInventory(inv);
+					
+					for(ItemStack ei : items){
+						
+						inv.addItem(ei);
+						
+					}
+					
+					p.openInventory(inv);
+					hp.getManagement().setLookingAtExchangeItems(true);
+					
 					
 				}else{
 					p.sendMessage(EXCHANGE_PREFIX + ChatColor.YELLOW + "Search for an item you want.");
@@ -127,15 +219,15 @@ public class ExchangeCommand implements CommandExecutor{
 				
 				GrandExchange ge = Raid.UTIL.getRaidData().getExchange();
 				
-				ArrayList<ExchangeItem> is = ge.getPlayerItems(p);
+				ArrayList<ExchangeItem> is = Raid.UTIL.getPlayer(p).getItemsForSale();
 				
 				if(is.isEmpty()){
 					p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "You have no items listed on the Grand Exchange.");
 					return true;
 				}
 				
-				Inventory inv = Bukkit.createInventory(null, 53, 
-						ChatColor.DARK_RED + "Your Items on the GE, [Total " + is.size() + "]");
+				Inventory inv = Bukkit.createInventory(null, 54, 
+						ChatColor.DARK_RED + "What you're selling.");
 				
 				laceInventory(inv);
 				
@@ -144,8 +236,6 @@ public class ExchangeCommand implements CommandExecutor{
 					inv.addItem(ei.toInformativeItemStack());
 					
 				}
-				
-				HCPlayer hp = Raid.UTIL.getPlayer(p);
 				hp.getManagement().setLookingAtOwnListedItems(true);
 				p.openInventory(inv);
 				
@@ -158,15 +248,15 @@ public class ExchangeCommand implements CommandExecutor{
 				
 				GrandExchange ge = Raid.UTIL.getRaidData().getExchange();
 				
-				ArrayList<ExchangeItem> is = ge.getPlayerItems(p);
+				ArrayList<ExchangeItem> is = Raid.UTIL.getPlayer(p).getItemsForSale(); 
 				
 				if(is.isEmpty()){
 					p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "You have no items listed on the Grand Exchange to remove.");
 					return true;
 				}
 				
-				Inventory inv = Bukkit.createInventory(null, 53, 
-						ChatColor.DARK_RED + "Your Items on the GE, [Total " + is.size() + "]");
+				Inventory inv = Bukkit.createInventory(null, 54, 
+						ChatColor.DARK_RED + "Right-click to remove.");
 				
 				laceInventory(inv);
 				
@@ -175,8 +265,7 @@ public class ExchangeCommand implements CommandExecutor{
 					inv.addItem(ei.toInformativeItemStack());
 					
 				}
-				
-				HCPlayer hp = Raid.UTIL.getPlayer(p);
+
 				hp.getManagement().setLookingAtRemovingItems(true);
 				p.openInventory(inv);
 				
@@ -229,11 +318,24 @@ public class ExchangeCommand implements CommandExecutor{
 				
 				
 				 */
+			}else{
+				
+				showOptions(p);
+				
 			}
 			
 		}
 		
 		return false;
+	}
+	
+	private void showOptions(Player p) {
+		String r = ChatColor.GRAY + " > /";
+		p.sendMessage(EXCHANGE_PREFIX + " --- Exchange Command --- ");
+		p.sendMessage(r + "ge add - Add an item to the Exchange");
+		p.sendMessage(r + "check - Check items on the Exchange.");
+		p.sendMessage(r + "remove - Remove an item from the Exchange.");
+		p.sendMessage(r + "list - List your items on the Exchange.");
 	}
 
 	private void laceInventory(Inventory inv) {
@@ -246,14 +348,17 @@ public class ExchangeCommand implements CommandExecutor{
 
 	private WeaponRarity getWeaponRarity(String a2, String a3){
 		
-		
-		WeaponRarity wr = WeaponRarity.valueOf(a2);
-		
-		if(wr == null){
-			return WeaponRarity.valueOf(a3);
+		for(WeaponRarity wr : WeaponRarity.values()){
+			
+			if(wr.toString().equalsIgnoreCase(a2)){
+				return wr;
+			}else if(wr.toString().equalsIgnoreCase(a3)){
+				return wr;
+			}
+			
 		}
 		
-		return wr;
+		return null;
 		
 		
 	}
@@ -275,10 +380,30 @@ public class ExchangeCommand implements CommandExecutor{
 		
 		try{
 			return Integer.parseInt("" + string.charAt(string.length()-1));
-		}catch(NumberFormatException e){
+		}catch(Exception e){
 			return 0;
 		}
 		
+	}
+	
+
+	private int split(String lookFor, String a2, String a3, String a4) {
+		
+		try{
+			Raid.log("Length = " + a2.split(lookFor).length) ;
+			Raid.log("Searching for '" + lookFor + "'");
+			Raid.log("Among String: " + a2);
+			return Integer.parseInt(a2.split(lookFor)[1]);
+		}catch(Exception e){}
+		try{
+			Raid.log(a3.split(lookFor)[0] + " - " + a3 + " - " + lookFor);
+			return Integer.parseInt(a3.split(lookFor)[1]);
+		}catch(Exception e){}
+		try{
+			Raid.log(a4.split(lookFor)[0] + " - " + a4 + " - " + lookFor);
+			return Integer.parseInt(a4.split(lookFor)[1]);
+		}catch(Exception e){}
+		return 0;
 	}
 
 	

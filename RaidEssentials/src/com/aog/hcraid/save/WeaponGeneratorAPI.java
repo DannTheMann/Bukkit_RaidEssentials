@@ -47,41 +47,7 @@ public class WeaponGeneratorAPI {
 			return null;
 		}
 		
-		WeaponDrop drop = items.get(random.nextInt(items.size()));
-		
-		ItemStack itemstack = new ItemStack(drop.getItemStack());
-		
-		int maxEnchantments = wr.getMaxEnchantments();
-		int rand = random.nextInt(drop.validDefaultEnchantments().size());
-		int randCount = 0;
-		int scape = 0;
-		
-		while(itemstack.getEnchantments().size() < maxEnchantments && scape < 100){
-			
-			randCount = 0;
-			
-			for(Enchantment enc : drop.validDefaultEnchantments()){
-				
-				if( ! itemstack.containsEnchantment(enc) && rand == randCount){
-					
-					itemstack.addEnchantment(enc, random.nextInt(wr.defaultMaxLevel())+1);
-					
-				}
-				
-				randCount++;
-				
-			}
-			
-			rand = random.nextInt(drop.validDefaultEnchantments().size());
-			
-			scape++;
-			
-		}
-		
-		 Raid.UTIL.nameItem(itemstack, wr.name() + " " + generateName(drop));
-		 Raid.UTIL.loreItemStack(itemstack, ChatColor.GRAY + "A " + wr + " weapon.");
-		
-		return itemstack;
+		return generateRandomWeapon(wr);
 		
 	}
 	
@@ -134,7 +100,7 @@ public class WeaponGeneratorAPI {
 					"Scrubs","Bishop's","Rook's","Turquoise","Randi's","Mercury's","Aphrodite's","Mars's","Jupiter's",
 					"Saturn's","Neptune's","Skeleton","Bone","Poison","Unknown","Battle","Mythril","Earth","Gale","Rune",
 					"Regal","Infamous","danslayerx's","Alucard's"};
-			String middle = WordUtils.capitalize(wd.getItemStack().getType().toString().replaceAll("_", "_").toLowerCase());
+			String middle = WordUtils.capitalize(wd.getItemStack().getType().toString().replaceAll("_", " ").toLowerCase());
 			String[] end = {"of Punishment","of Light","of Darkness","of Goodness","of Anger","of Revenge","of Happiness",
 					"of Sorrow","of Melancholy","of Destruction","of Insanity","of Hellfire","of Iron","of HcRaid","of Beowulf",
 					"of Death","of Truth","of Silence","of the Untold","of the Abyss","of Swiftness","of Harmony"};
@@ -145,6 +111,73 @@ public class WeaponGeneratorAPI {
 			return "Some Magical Weapon!";
 		}
 	
+	}
+
+	public static ItemStack generateRandomWeapon(WeaponRarity rarity) {
+		
+		WeaponRarity wr = rarity;
+		
+		WeaponDrop drop = items.get(random.nextInt(items.size()));
+		
+		ItemStack itemstack = new ItemStack(drop.getItemStack());
+
+		Random r = new Random();
+		
+		int maxEnchantments = (r.nextInt(wr.lowMaxLevel() * wr.getMaxEnchantments()) /wr.lowMaxLevel()) + 1; 
+		int rand = random.nextInt(drop.validDefaultEnchantments().size());
+		int randCount = 0;
+		int scape = 0;	
+		
+		int max = wr.getMaxEnchantments();
+		int min = wr.lowMaxLevel();
+		
+		int totalEnchants = r.nextInt(min * max)+1;
+		int outcome = totalEnchants / min;
+		
+		if(outcome < min){
+			outcome = min;
+		}
+		
+		maxEnchantments = outcome;
+		
+		Raid.log("ME = " + maxEnchantments);
+		
+		while(itemstack.getEnchantments().size() < maxEnchantments && scape < 1000){
+			
+			randCount = 0;
+			
+			for(Enchantment enc : drop.validDefaultEnchantments()){
+				
+				if( ! itemstack.containsEnchantment(enc) && rand == randCount){
+					
+					itemstack.addUnsafeEnchantment(enc, random.nextInt(wr.lowMaxLevel())+1);
+					break;
+				}else if(rand == randCount){
+					break;
+				}			
+				
+				
+				randCount++;
+				
+			}
+			
+			rand = random.nextInt(drop.validDefaultEnchantments().size());
+			
+			scape++;
+			
+		}	
+		
+		if(scape > 1000){
+			Raid.log("Failed on loop, escaping...");
+		}
+		
+		Raid.log("Weapon Rarity - " + wr.weaponName());
+		
+		 Raid.UTIL.nameItem(itemstack, wr.weaponName() + " " + generateName(drop));
+		 Raid.UTIL.loreItemStack(itemstack, wr.weaponName() + " weapon.");
+		
+		return itemstack;
+		
 	}
 
 }
