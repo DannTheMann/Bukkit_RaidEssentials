@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -40,7 +41,7 @@ public class Util {
 		
 		raidData = SaveData.loadRaidDate();
 		
-		if(raidData.getExchange() == null){
+		if(raidData == null){
 			raidData = new RaidData();
 		}
 		
@@ -338,6 +339,141 @@ public class Util {
 		}else{
 			log("Player '" + p.getName() + "' is already on the database.");
 		}
+	}
+
+	public int getPlayersBalanceInInventory(Player p) {
+		
+		int points = 0;
+		
+		for(ItemStack i : p.getInventory()){
+			if (i != null) {
+				if (i.getType() == Material.GOLD_INGOT) {
+					points += 256;
+				} else if (i.getType() == Material.IRON_INGOT) {
+					points += 16;
+				} else if (i.getType() == Material.CLAY_BRICK) {
+					points++;
+				}
+			}
+		}
+		return points;
+	}
+
+	public void deductFromPlayersInventory(Player p, int sellingCost) {
+		
+		for(ItemStack i : p.getInventory()){
+			if ( i == null) { continue; }
+			if(i.getType() == Material.GOLD_INGOT){
+				if(sellingCost > 256){
+					
+					if(i.getAmount() > 1){
+						i.setAmount(i.getAmount()-1);
+					}else{
+						p.getInventory().remove(i);
+					}
+					
+					sellingCost =- 256;
+					
+				}
+				
+			}else if(i.getType() == Material.IRON_INGOT){
+				
+				if(sellingCost > 16){
+					
+					if(i.getAmount() > 1){
+						i.setAmount(i.getAmount()-1);
+					}else{
+						p.getInventory().remove(i);
+					}
+					
+					sellingCost =- 16;
+					
+				}
+				
+			}else if(i.getType() == Material.CLAY_BRICK){
+				
+				if(sellingCost > 1){
+					
+					if(i.getAmount() > 1){
+						i.setAmount(i.getAmount()-1);
+					}else{
+						p.getInventory().remove(i);
+					}
+					
+					sellingCost--;
+					
+				}
+			}
+			
+			if(sellingCost == 0){
+				break;
+			}
+			
+		}
+		
+		int returnPoints = 0;
+		
+		if(sellingCost > 0){
+			
+			for (ItemStack i : p.getInventory()) {
+				if(i == null) { continue; }
+				if (i.getType() == Material.GOLD_INGOT) {
+					if (sellingCost > 256) {
+
+						if (i.getAmount() > 1) {
+							i.setAmount(i.getAmount() - 1);
+						} else {
+							p.getInventory().remove(i);
+						}
+
+						returnPoints = 256 - sellingCost;
+
+						break;
+					}
+
+				} else if (i.getType() == Material.IRON_INGOT) {
+
+					if (sellingCost > 16) {
+
+						if (i.getAmount() > 1) {
+							i.setAmount(i.getAmount() - 1);
+						} else {
+							p.getInventory().remove(i);
+						}
+						returnPoints = 16 - sellingCost;
+						break;
+					}
+
+				}
+
+			}
+			
+			
+			int sil = returnPoints / 16;
+			
+			int br = returnPoints - (16 * sil);
+			
+			if(sil > 0){
+				p.getInventory().addItem(getSilver(sil));
+			}
+			if(br > 0){
+				p.getInventory().addItem(getBronze(br));
+			}
+		}
+
+		
+	}
+	
+	public ItemStack getBronze(int amount){
+		return nameItemStack(new ItemStack(Material.CLAY_BRICK, amount), "Bronze Bar");
+	}
+	
+	public ItemStack getSilver(int amount){
+		return nameItemStack(new ItemStack(Material.IRON_INGOT, amount), "Silver Bar");
+	}
+	
+	public ItemStack getGold(int amount){
+		return nameItemStack(new ItemStack(Material.GOLD_INGOT, amount), "Gold Bar");
 	}
 
 }

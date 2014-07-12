@@ -37,6 +37,10 @@ public class InventoryManagement implements Listener{
 					
 					ItemStack is = e.getCurrentItem();
 					
+					if(e.getSlot() == 53){
+						return;
+					}
+					
 					int indexPosition = -99;
 					
 					List<String> lore = is.getItemMeta().getLore();
@@ -96,9 +100,11 @@ public class InventoryManagement implements Listener{
 		HCPlayer hp = Raid.UTIL.getPlayer((Player) e.getPlayer());
 		
 		if(hp != null && (hp.getManagement().isLookingAtOwnListedItems()
-				|| hp.getManagement().isLookingAtRemovingItems())){
+				|| hp.getManagement().isLookingAtRemovingItems()
+				|| hp.getManagement().isLookingAtExchangeItems())){
 			hp.getManagement().setLookingAtOwnListedItems(false);
 			hp.getManagement().setLookingAtRemovingItems(false);
+			hp.getManagement().setLookingAtExchangeItems(false);
 		}
 		
 	}
@@ -127,7 +133,12 @@ public class InventoryManagement implements Listener{
 				
 				if(e.getCurrentItem() != null){
 					
-					ItemStack is = e.getCurrentItem();
+					ItemStack is = e.getCurrentItem();			
+					
+					if(e.getSlot() == 53){
+						return;
+					}
+					
 					
 					Raid.log("Looking to buy...");
 					
@@ -163,18 +174,26 @@ public class InventoryManagement implements Listener{
 						return;
 					}
 					
-					// Charge them
+					if(Raid.UTIL.getPlayersBalanceInInventory((Player)e.getWhoClicked()) >= ei.getSellingCost()){
 					
 					ItemStack item = ge.purchaseItemFromExchange(ei);
 					
 					((Player) e.getWhoClicked()).sendMessage(ExchangeCommand.EXCHANGE_PREFIX + ChatColor.GREEN + 
-							" Successfully purchased " + ei.getItemType() + " x" + ei.getAmount() + " from the Exchange "
+							" Successfully bought " + ei.getItemType() + " x" + ei.getAmount() + " from the Exchange "
 									+ ei.getTradingTranslation() + ".");
+					
+					Raid.UTIL.deductFromPlayersInventory((Player)e.getWhoClicked(), ei.getSellingCost());
 					
 					e.getWhoClicked().getInventory().addItem(item);
 					
 					e.getInventory().remove(is);
 					((Player) e.getWhoClicked()).updateInventory();
+					
+					}else{
+						
+						((Player) e.getWhoClicked()).sendMessage(ExchangeCommand.EXCHANGE_PREFIX + 
+								ChatColor.RED + "You don't have enough gold, silver or bronze in your inventory to buy this.");
+					}
 				
 				}
 				

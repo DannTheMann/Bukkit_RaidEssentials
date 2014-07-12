@@ -1,6 +1,5 @@
 package com.aog.hcraid.commands;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 
 import org.bukkit.ChatColor;
@@ -13,7 +12,6 @@ import org.bukkit.entity.Player;
 import com.aog.hcraid.Raid;
 import com.aog.hcraid.save.GrandExchange;
 import com.aog.hcraid.save.GrandExchangeItem;
-import com.aog.hcraid.save.RaidData;
 import com.aog.hcraid.save.WeaponGeneratorAPI;
 import com.aog.hcraid.save.WeaponRarity;
 
@@ -36,6 +34,8 @@ public class DebugCommand implements CommandExecutor{
 					
 					p.sendMessage( " General Debug Commands for Raid Essentials. " );
 					p.sendMessage( " - /rdebug weapon - Generate random weapon. ");
+					p.sendMessage(" - /rdebug exchange - Exchange debug info.");
+					p.sendMessage( " - /redebug nullcheck - checks null data.");
 					
 				}else if(args[0].equalsIgnoreCase("weapon")){
 				
@@ -75,6 +75,10 @@ public class DebugCommand implements CommandExecutor{
 					
 					if(args.length == 1){
 						
+						p.sendMessage("/rdebug exchange list - List all items in exchange.");
+						p.sendMessage("/rdebug exchange gold - Gives 999 gold.");
+						p.sendMessage("/rdebug exchange silver - Gives 999 silver.");
+						p.sendMessage("/rdebug exchange bronze - Gives 999 bronze.");
 						
 					}else if(args[1].equalsIgnoreCase("list")){
 					
@@ -90,6 +94,18 @@ public class DebugCommand implements CommandExecutor{
 						
 						
 						p.sendMessage("'HashMap<Material, GrandExchangeItem> itemsForSale' size - " + i.keySet().size());
+						
+					}else if(args[1].equalsIgnoreCase("gold")){
+						
+						p.getInventory().addItem(Raid.UTIL.getGold(999));
+						
+					}else if(args[1].equalsIgnoreCase("silver")){
+						
+						p.getInventory().addItem(Raid.UTIL.getSilver(999));
+						
+					}else if(args[1].equalsIgnoreCase("bronze")){
+						
+						p.getInventory().addItem(Raid.UTIL.getBronze(999));
 						
 					}
 					
