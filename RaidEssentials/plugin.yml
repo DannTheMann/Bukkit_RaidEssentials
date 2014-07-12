@@ -1,0 +1,10 @@
+name: HcRaid
+version: 1_a
+main: com.aog.hcraid.Raid
+author: danslayerx
+description: Main compliance with HcRaid
+commands:
+   rdebug:
+      description: Debug command for Raid
+   ge:
+      description: Grand Exchange command, used to access the Grand Exchange.
