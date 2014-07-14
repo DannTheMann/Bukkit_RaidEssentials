@@ -72,12 +72,12 @@ public class ExchangeCommand implements CommandExecutor{
 				}
 			}
 			
-			Raid.log("a1 == " + a1);
-			Raid.log("a2 == " + a2);
-			Raid.log("a3 == " + a3);
-			Raid.log("a4 == " + a4);
+			//Raid.log("a1 == " + a1);
+			//Raid.log("a2 == " + a2);
+			//Raid.log("a3 == " + a3);
+			//Raid.log("a4 == " + a4);
 			
-			if(a1.equalsIgnoreCase("add")){
+			if(a1.equalsIgnoreCase("add") || a1.equalsIgnoreCase("a")){
 				
 				// add an item to the exchange
 				
@@ -136,7 +136,8 @@ public class ExchangeCommand implements CommandExecutor{
 				
 				p.setItemInHand(null);
 				
-			}else if(a1.equalsIgnoreCase("check") || a1.equalsIgnoreCase("buy") || a1.equalsIgnoreCase("get")){
+			}else if(a1.equalsIgnoreCase("check") || a1.equalsIgnoreCase("buy") || a1.equalsIgnoreCase("get") 
+					|| a1.equalsIgnoreCase("c")){
 				
 				if(a2 != ""){
 					
@@ -170,7 +171,8 @@ public class ExchangeCommand implements CommandExecutor{
 					}else if(items == null){
 						p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "You've got to specify what you're looking for. Here's a " +
 								"few examples. ");
-						p.sendMessage(ChatColor.GRAY + " > /ge check 276 - Checks for all Diamond Swords");
+						p.sendMessage(ChatColor.GRAY + " > /ge check 276 - Checks for all Diamond Swords.");
+						p.sendMessage(ChatColor.GRAY + " > /ge check stone - Checks for all stone blocks.");
 						p.sendMessage(ChatColor.GRAY + " > /ge check 276 rare - Checks for all Diamond Swords that are rare.");
 						p.sendMessage(ChatColor.GRAY + " > /ge check rare - Checks for all Rare items.");
 						p.sendMessage(ChatColor.GRAY + " > /ge check 276 nothing - Checks for all Diamond Swords that are not of any Scale attribute.");
@@ -203,17 +205,19 @@ public class ExchangeCommand implements CommandExecutor{
 					
 					p.openInventory(inv);
 					hp.getManagement().setLookingAtExchangeItems(true);
+					hp.setInventory(p.getInventory());
 					
 					
 				}else{
 					p.sendMessage(EXCHANGE_PREFIX + ChatColor.YELLOW + "Search for an item you want.");
-					p.sendMessage(ChatColor.GRAY + " - /ge check <itemID> [Rarity]");
+					p.sendMessage(ChatColor.GRAY + " - /ge check <itemID / item name> [Rarity]");
+					p.sendMessage(ChatColor.GRAY + " > /ge check stone - Checks for all stone blocks.");
 					p.sendMessage(ChatColor.GRAY + " - /ge check 276 - Searches for all diamond swords.");
 					p.sendMessage(ChatColor.GRAY + " - /ge check 276 rare - Searches for all diamond swords " +
 							"that are rare.");
 				}
 				
-			}else if(a1.equalsIgnoreCase("list")){
+			}else if(a1.equalsIgnoreCase("list") || a1.equalsIgnoreCase("l")){
 				
 				// List their items on the exchange
 				
@@ -237,11 +241,12 @@ public class ExchangeCommand implements CommandExecutor{
 					
 				}
 				hp.getManagement().setLookingAtOwnListedItems(true);
+				hp.setInventory(p.getInventory());
 				p.openInventory(inv);
 				
 				
 				
-			}else if(a1.equalsIgnoreCase("remove") || (a1.equalsIgnoreCase("rem"))){
+			}else if(a1.equalsIgnoreCase("remove") || (a1.equalsIgnoreCase("rem") || a1.equalsIgnoreCase("r"))){
 				
 				// Display an inventory, let them right-click to remove items from the GE, once they're
 				// removed add those items to a list and wait until the inventory gets closed to return items.
@@ -267,6 +272,8 @@ public class ExchangeCommand implements CommandExecutor{
 				}
 
 				hp.getManagement().setLookingAtRemovingItems(true);
+				
+				hp.setInventory(p.getInventory());
 				p.openInventory(inv);
 				
 				/*
@@ -318,9 +325,54 @@ public class ExchangeCommand implements CommandExecutor{
 				
 				
 				 */
+			}else if(a1.equalsIgnoreCase("i") || a1.equalsIgnoreCase("info")){
+				
+				ItemStack itemToCheck = p.getItemInHand();
+				
+				if(a2 != ""){
+					
+					Material m = Raid.UTIL.getItemAlias(a2);
+					
+					if(m == null){
+						p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "Couldn't find an item called '" + a2 + "', try using a different name for this item or it's ID.");
+						return true;
+					}
+					
+					itemToCheck = new ItemStack(m);
+				}
+				
+				if(itemToCheck == null || itemToCheck.getType() == Material.AIR){
+					p.sendMessage(EXCHANGE_PREFIX + ChatColor.RED + "Make sure you're holding the item you wish" +
+							" check on the Exchange.");
+					return true;
+				}
+				
+				Raid.log("Material m = " + itemToCheck.getType());
+				
+				ExchangeItem[] ei = e.getInformationOnItem(itemToCheck.getType());
+				
+				
+				
+				p.sendMessage(EXCHANGE_PREFIX + " ---- " + WordUtils.capitalize(itemToCheck
+						.getType().toString().toLowerCase().replaceAll("_", " ")));
+				if(ei.length == 0){
+					p.sendMessage(ChatColor.GRAY + " > No " + WordUtils.capitalize(itemToCheck
+						.getType().toString().toLowerCase().replaceAll("_", " ")) + " is for sale.");
+					return true;
+				}
+				p.sendMessage(ChatColor.GRAY + " > Cheapest Selling Price: " + ei[0].getTradingTranslation());
+				p.sendMessage(ChatColor.GRAY + " > Cheapest Amount for sale: " + ei[0].getAmount());
+				p.sendMessage(ChatColor.GRAY + " > Total being sold: " + ei.length);
+				p.sendMessage(ChatColor.GRAY + " > Alias: " + Raid.UTIL.getItemAliases(itemToCheck.getType()));
+				
+			}else if(c.getName().equalsIgnoreCase("mod")){
+				
+				// Remove commands
+				
+				
 			}else{
 				
-				showOptions(p);
+				showOptions(p, c.getName());
 				
 			}
 			
@@ -329,13 +381,14 @@ public class ExchangeCommand implements CommandExecutor{
 		return false;
 	}
 	
-	private void showOptions(Player p) {
-		String r = ChatColor.GRAY + " > /";
+	private void showOptions(Player p, String cmd) {
+		String r = ChatColor.GRAY + " > /" + cmd + " ";
 		p.sendMessage(EXCHANGE_PREFIX + " --- Exchange Command --- ");
-		p.sendMessage(r + "ge add - Add an item to the Exchange");
-		p.sendMessage(r + "check - Check items on the Exchange.");
-		p.sendMessage(r + "remove - Remove an item from the Exchange.");
-		p.sendMessage(r + "list - List your items on the Exchange.");
+		p.sendMessage(r + "a - Add an item to the Exchange");
+		p.sendMessage(r + "c - Check items on the Exchange.");
+		p.sendMessage(r + "r - Remove an item from the Exchange.");
+		p.sendMessage(r + "l - List your items on the Exchange.");
+		p.sendMessage(r + "i - Display the lowest selling information about an item.");
 	}
 
 	private void laceInventory(Inventory inv) {
@@ -366,16 +419,17 @@ public class ExchangeCommand implements CommandExecutor{
 	private Material getMaterialFromString(String a2, String a3) {
 		
 		try{
-			return Material.getMaterial(Integer.parseInt(a2));
+			return Raid.UTIL.getItemAlias(a2);
 		}catch(NumberFormatException e){}
 		
 		try{
-			return Material.getMaterial(Integer.parseInt(a3));
+			return Raid.UTIL.getItemAlias(a3);
 		}catch(NumberFormatException e){}
 		
 		return null;
 	}
 
+	@SuppressWarnings("unused")
 	private int split(String string) {
 		
 		try{

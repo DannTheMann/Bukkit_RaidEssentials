@@ -46,6 +46,20 @@ public class GrandExchange implements Serializable{
 		return itemstack;
 	}
 	
+	public ExchangeItem[] getInformationOnItem(Material m) {
+
+		GrandExchangeItem gei = itemsForSale.get(m);
+
+		if(gei == null){
+			return null;
+		}
+		
+		ExchangeItem[] items = gei.getExchangeItems();
+		
+		return items;
+		
+	}
+	
 	public ItemStack[] searchFor(WeaponRarity wr){
 		
 		ArrayList<ExchangeItem> itemOfRarity = new ArrayList<>();		
@@ -224,4 +238,5 @@ public class GrandExchange implements Serializable{
 	public HashMap<Material, GrandExchangeItem> getItems(){
 		return itemsForSale;
 	}
+
 }

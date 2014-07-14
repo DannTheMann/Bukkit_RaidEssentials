@@ -94,6 +94,7 @@ public class SaveData {
 	    	  
 	         FileInputStream fileIn = new FileInputStream(Raid.UTIL.getDirectory() + "RaidData.ser");
 	         ObjectInputStream in = new ObjectInputStream(fileIn);
+	         Raid.log("Loading file from directory - " + Raid.UTIL.getDirectory() + "RaidData.ser");
 	         data = (RaidData) in.readObject();
 	         in.close();
 	         fileIn.close();
@@ -105,12 +106,8 @@ public class SaveData {
 	         }
 	         
 	         return data;
-	      }catch(IOException i){
-	         i.printStackTrace();
-	         return null;
-	      }catch(ClassNotFoundException c){
-	    	 Raid.log("Failed to load 'RaidData'.");
-	    	 c.printStackTrace();
+	      }catch(Exception i){
+	    	  i.printStackTrace();
 	         return null;
 	      }
 		

@@ -72,13 +72,19 @@ public class DebugCommand implements CommandExecutor{
 					}
 					
 				}else if(args[0].equalsIgnoreCase("exchange")){
+								
+					int amount = 10;
+					
+					if(args.length >= 3){
+						amount = Integer.parseInt(args[2]);
+					}
 					
 					if(args.length == 1){
 						
 						p.sendMessage("/rdebug exchange list - List all items in exchange.");
 						p.sendMessage("/rdebug exchange gold - Gives 999 gold.");
 						p.sendMessage("/rdebug exchange silver - Gives 999 silver.");
-						p.sendMessage("/rdebug exchange bronze - Gives 999 bronze.");
+						p.sendMessage("/rdebug exchange bronze - Gives 999 bronze.");						
 						
 					}else if(args[1].equalsIgnoreCase("list")){
 					
@@ -97,15 +103,15 @@ public class DebugCommand implements CommandExecutor{
 						
 					}else if(args[1].equalsIgnoreCase("gold")){
 						
-						p.getInventory().addItem(Raid.UTIL.getGold(999));
+						p.getInventory().addItem(Raid.UTIL.getGold(amount));
 						
 					}else if(args[1].equalsIgnoreCase("silver")){
 						
-						p.getInventory().addItem(Raid.UTIL.getSilver(999));
+						p.getInventory().addItem(Raid.UTIL.getSilver(amount));
 						
 					}else if(args[1].equalsIgnoreCase("bronze")){
 						
-						p.getInventory().addItem(Raid.UTIL.getBronze(999));
+						p.getInventory().addItem(Raid.UTIL.getBronze(amount));
 						
 					}
 					

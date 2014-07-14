@@ -144,16 +144,16 @@ public class GrandExchangeItem implements Serializable{
 		ArrayList<ExchangeItem> items = playerTrade.get(uuid);
 		
 		if(items == null){
+			Raid.log("Created new arraylist, previous was null.");
 			items = new ArrayList<ExchangeItem>();
 		}
+		Raid.log("Added item to " + Raid.UTIL.getPlayer(uuid).getName() + " list, size - " + items.size());
 		
 		if(cantSell(item.getType())){
 			return ChatColor.DARK_RED + "You can't sell " + item.getType().toString().toLowerCase().replaceAll("_", " ");
 		}
 
-		ExchangeItem exch 
-		
-		= new ExchangeItem(item, uuid, admin, askingPrice, getID(items));
+		ExchangeItem exch = new ExchangeItem(item, uuid, admin, askingPrice, getID(items));
 		
 		items.add(exch);
 		
@@ -197,17 +197,13 @@ public class GrandExchangeItem implements Serializable{
 	 */
 	private int getID(ArrayList<ExchangeItem> items) {
 		
-		int response = items.size();
-		
 		for(int i = 0; i < items.size(); i++){
-			
-			if(items.get(i).getItemId() != response){
+			if(i != items.get(i).getIndexValue()){
 				return i;
 			}
-			
 		}
 		
-		return response;
+		return items.size();
 	}
 
 	public ExchangeItem getItemFromUUID(String uuid, int indexPosition) {

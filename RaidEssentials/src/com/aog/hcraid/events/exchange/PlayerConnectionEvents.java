@@ -19,12 +19,16 @@ public class PlayerConnectionEvents implements Listener{
 		
 		Raid.UTIL.addPlayer(e.getPlayer());
 		
+		Raid.UTIL.getRaidData().taxPlayers();
+		
 	}
 	
 	@EventHandler
 	public void logOff(PlayerQuitEvent e){
 		
 		save(e.getPlayer());
+		
+		Raid.UTIL.getRaidData().taxPlayers();
 		
 	}
 	

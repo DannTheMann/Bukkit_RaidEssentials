@@ -6,6 +6,8 @@ import java.util.HashMap;
 
 import org.bukkit.entity.LivingEntity;
 
+import com.aog.hcraid.Raid;
+import com.aog.hcraid.commands.CurrencyCommand;
 import com.aog.hcraid.serial_file.SaveData;
 
 
@@ -16,6 +18,7 @@ public class RaidData implements Serializable{
 	private HashMap<String, HCPlayer> players;
 	private ArrayList<HCBoss> bosses;
 	private GrandExchange exchange;
+	private long nextTaxDay;
 	
 	public static final int MAX_BOSSES_ALLOWED = 30;
 	
@@ -25,10 +28,24 @@ public class RaidData implements Serializable{
 		players = new HashMap<String, HCPlayer>();
 		bosses = new ArrayList<HCBoss>();
 		exchange = new GrandExchange();
+		nextTaxDay = Raid.UTIL.getFutureDateInSeconds(2);
 	}
 	
 	public void reload(){
 		enemies = new ArrayList<>();
+	}
+	
+	public void taxPlayers(){
+		
+		if ((System.currentTimeMillis() / 1000) > nextTaxDay) {
+			
+			nextTaxDay = Raid.UTIL.getFutureDateInSeconds(2);
+			
+			for (HCPlayer p : players.values()) {
+				p.tax();
+			}
+		}
+		
 	}
 	
 	public GrandExchange getExchange(){

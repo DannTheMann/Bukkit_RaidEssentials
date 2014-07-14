@@ -8,3 +8,4 @@ commands:
       description: Debug command for Raid
    ge:
       description: Grand Exchange command, used to access the Grand Exchange.
+      aliases: [exchange,grandexchange,shop,buy]

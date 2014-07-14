@@ -2,6 +2,7 @@ package com.aog.hcraid;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,7 +14,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
-
 
 import com.aog.hcraid.commands.DebugCommand;
 import com.aog.hcraid.commands.ExchangeCommand;
@@ -29,6 +29,7 @@ public class Util {
 	
 	private JavaPlugin plugin;
 	private RaidData raidData;
+	private MaterialAlias alias;
 	//public HashMap<String, HCPlayer> players;
 	
 	public void load(JavaPlugin plugin){
@@ -44,6 +45,8 @@ public class Util {
 		if(raidData == null){
 			raidData = new RaidData();
 		}
+		
+		alias = new MaterialAlias();
 		
 		log("Loaded Raid Data...");
 		registerEvents();
@@ -348,23 +351,27 @@ public class Util {
 		for(ItemStack i : p.getInventory()){
 			if (i != null) {
 				if (i.getType() == Material.GOLD_INGOT) {
-					points += 256;
+					points += 256 * i.getAmount();
 				} else if (i.getType() == Material.IRON_INGOT) {
-					points += 16;
+					points += 16 * i.getAmount();;
 				} else if (i.getType() == Material.CLAY_BRICK) {
-					points++;
+					points+= i.getAmount();;
 				}
 			}
 		}
 		return points;
 	}
 
+	@SuppressWarnings("deprecation")
 	public void deductFromPlayersInventory(Player p, int sellingCost) {
+		
+		Raid.log("Deducting...");
+		Raid.log("Cost = " + sellingCost);
 		
 		for(ItemStack i : p.getInventory()){
 			if ( i == null) { continue; }
 			if(i.getType() == Material.GOLD_INGOT){
-				if(sellingCost > 256){
+				if(sellingCost >= 256){
 					
 					if(i.getAmount() > 1){
 						i.setAmount(i.getAmount()-1);
@@ -378,7 +385,7 @@ public class Util {
 				
 			}else if(i.getType() == Material.IRON_INGOT){
 				
-				if(sellingCost > 16){
+				if(sellingCost >= 16){
 					
 					if(i.getAmount() > 1){
 						i.setAmount(i.getAmount()-1);
@@ -392,7 +399,7 @@ public class Util {
 				
 			}else if(i.getType() == Material.CLAY_BRICK){
 				
-				if(sellingCost > 1){
+				if(sellingCost >= 1){
 					
 					if(i.getAmount() > 1){
 						i.setAmount(i.getAmount()-1);
@@ -411,14 +418,46 @@ public class Util {
 			
 		}
 		
-		int returnPoints = 0;
+		Raid.log("After Cost = " + sellingCost);
 		
 		if(sellingCost > 0){
+			
+			
+			
+			int goldBars = 0;
+			int silverBars = 0;
+			
+			for(ItemStack i : p.getInventory()){
+				if(i != null){
+					if(i.getType() == Material.GOLD_INGOT){
+						goldBars++;
+					}else if(i.getType() == Material.IRON_INGOT){
+						silverBars++;
+					}
+				}
+			}
+			
+			if(silverBars > 0){
+				
+				for(int i = 0; i < silverBars && sellingCost >= 16; i++){
+					sellingCost =- 16;
+					
+				}
+			}
+			
+			if(goldBars > 0){
+				
+				for(int i = 0; i < goldBars && sellingCost >= 256; i++){
+					sellingCost =- 256;
+				}
+				
+			}
+			/*
 			
 			for (ItemStack i : p.getInventory()) {
 				if(i == null) { continue; }
 				if (i.getType() == Material.GOLD_INGOT) {
-					if (sellingCost > 256) {
+					if (sellingCost >= 256) {
 
 						if (i.getAmount() > 1) {
 							i.setAmount(i.getAmount() - 1);
@@ -433,7 +472,7 @@ public class Util {
 
 				} else if (i.getType() == Material.IRON_INGOT) {
 
-					if (sellingCost > 16) {
+					if (sellingCost >= 16) {
 
 						if (i.getAmount() > 1) {
 							i.setAmount(i.getAmount() - 1);
@@ -448,10 +487,17 @@ public class Util {
 
 			}
 			
+			*/
 			
-			int sil = returnPoints / 16;
+			Raid.log("Return Points = " + sellingCost);
 			
-			int br = returnPoints - (16 * sil);
+			
+			int sil = sellingCost / 16;
+			
+			int br = sellingCost - (16 * sil);
+			
+			Raid.log("Silver 2R = " + sil);
+			Raid.log("Bronze 2R = " + br);
 			
 			if(sil > 0){
 				p.getInventory().addItem(getSilver(sil));
@@ -461,6 +507,7 @@ public class Util {
 			}
 		}
 
+		p.updateInventory();
 		
 	}
 	
@@ -474,6 +521,143 @@ public class Util {
 	
 	public ItemStack getGold(int amount){
 		return nameItemStack(new ItemStack(Material.GOLD_INGOT, amount), "Gold Bar");
+	}
+
+	@SuppressWarnings("deprecation")
+	public int removePlayersInventoryBalance(Player p) {
+		int points = 0;
+		
+		for(ItemStack i : p.getInventory()){
+			if (i != null) {
+				if (i.getType() == Material.GOLD_INGOT) {
+					points += 256 * i.getAmount();
+					p.getInventory().remove(i);
+				} else if (i.getType() == Material.IRON_INGOT) {
+					points += 16 * i.getAmount();;
+					p.getInventory().remove(i);
+				} else if (i.getType() == Material.CLAY_BRICK) {
+					points+= i.getAmount();;
+					p.getInventory().remove(i);
+				}
+			}
+		}
+		p.updateInventory();
+		return points;
+	}
+
+	public void payOutPlayer(Player p, int bal) {
+		
+		int testPoints = bal;
+		
+		int gold = testPoints / ExchangeItem.GOLD_WORTH;
+		int goldPoints = gold * ExchangeItem.GOLD_WORTH;
+		int silver = (testPoints - goldPoints) / ExchangeItem.SILVER_WORTH;
+		int silverPoints = silver * ExchangeItem.SILVER_WORTH;
+		int bronze = testPoints - (goldPoints + silverPoints);
+		
+		while(gold > 64 || silver > 64 || bronze > 64){
+			
+			if(gold > 64){
+				gold =- 64;
+				givePlayerItem(p, getGold(64));
+			}
+			if(silver > 64){
+				silver =- 64;
+				givePlayerItem(p, getSilver(64));
+			}
+			if(bronze > 64){
+				bronze =- 64;
+				givePlayerItem(p, getBronze(64));
+			}
+			
+		}
+		
+		givePlayerItem(p, getGold(gold));
+		givePlayerItem(p, getSilver(silver));
+		givePlayerItem(p, getBronze(bronze));
+		
+	}
+
+	public void givePlayerItem(Player p, ItemStack item) {
+		
+		if(item.getAmount() == 0){
+			return;
+		}
+		
+		for(ItemStack i : p.getInventory()){
+			if(i == null){
+				p.getInventory().addItem(item);
+				return;
+			}
+		}
+		
+		p.getWorld().dropItem(p.getLocation(), item);
+		
+	}
+
+	public Material getItemAlias(String a2) {
+		
+		HashMap<Material, ArrayList<String>> map = alias.getAlias();
+		
+		for(Material m : alias.getAlias().keySet()){
+			
+			for(String u : alias.getAlias().get(m)){
+				if(u.equalsIgnoreCase(a2)){
+					return m;
+				}
+			}
+			
+		}
+		
+		try{
+			return Material.getMaterial(Integer.parseInt(a2));
+		}catch(NumberFormatException e){
+			
+		}
+		
+		return null;
+		
+	}
+
+	public String getItemAliases(Material type) {
+		
+		for(Material m : alias.getAlias().keySet()){
+			
+			if(m == type){
+			
+				String line = "";
+
+				for (String u : alias.getAlias().get(m)) {
+					line += u + ",";
+				}
+
+				line.substring(0, line.length() - 2);
+
+				return line;
+			}
+
+		}
+		return "N/A";
+		
+	}
+
+	public String getTranslationForCurrency(int tax) {
+		int testPoints = tax;
+		
+		int gold = testPoints / ExchangeItem.GOLD_WORTH;
+		int goldPoints = gold * ExchangeItem.GOLD_WORTH;
+		int silver = (testPoints - goldPoints) / ExchangeItem.SILVER_WORTH;
+		int silverPoints = silver * ExchangeItem.SILVER_WORTH;
+		int bronze = testPoints - (goldPoints + silverPoints);
+		
+		return ChatColor.GOLD + "Gold: " + gold + ChatColor.AQUA + " Silver: " + silver + 
+				 ChatColor.RED + " Bronze: " + bronze;
+	}
+
+	public Player getPlayer(HCPlayer hcPlayer) {
+		
+		return Bukkit.getPlayer(UUID.fromString(hcPlayer.getUniqueId()));
+		
 	}
 
 }

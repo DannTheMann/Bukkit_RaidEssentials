@@ -3,14 +3,19 @@ package com.aog.hcraid.events.exchange;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import com.aog.hcraid.Raid;
 import com.aog.hcraid.commands.ExchangeCommand;
@@ -20,6 +25,34 @@ import com.aog.hcraid.save.HCPlayer;
 
 public class InventoryManagement implements Listener{
 	
+	
+	public void multiplyExplosion(EntityExplodeEvent e) {
+		
+		e.setYield(0);
+		
+		final ArrayList<Block> locations = new ArrayList<Block>();
+		
+		for (Block b : e.blockList()) {
+
+			if(b.getType() != Material.AIR){
+				locations.add(b);
+			}
+		}
+
+		new BukkitRunnable() {
+			
+			@Override
+			public void run() {
+				for(Block l : locations)
+					l.setType(Material.LAVA);
+			}
+		}.runTaskLater(Raid.UTIL.getPlugin(), 3);
+
+		
+		Bukkit.broadcastMessage("Size of blocks changed: " + e.blockList().size());
+
+	}
+
 	@SuppressWarnings("deprecation")
 	@EventHandler
 	public void inspectingOwnItems(InventoryClickEvent e){
@@ -32,8 +65,6 @@ public class InventoryManagement implements Listener{
 			if(e.getClick() == ClickType.RIGHT){
 				
 				if(e.getCurrentItem() != null){
-					
-					Raid.log("Ready to remove.");
 					
 					ItemStack is = e.getCurrentItem();
 					
@@ -56,8 +87,6 @@ public class InventoryManagement implements Listener{
 						}
 					}
 					
-					Raid.log("Index pos = " + indexPosition);
-					
 					ArrayList<ExchangeItem> eil = hp.getItemsForSale();
 					
 					ExchangeItem exch = null;
@@ -72,7 +101,6 @@ public class InventoryManagement implements Listener{
 					}
 					
 					if(exch == null){
-						Raid.log("Couldn't find item to Index Value: " + indexPosition);
 						return;
 					}
 					
@@ -105,6 +133,9 @@ public class InventoryManagement implements Listener{
 			hp.getManagement().setLookingAtOwnListedItems(false);
 			hp.getManagement().setLookingAtRemovingItems(false);
 			hp.getManagement().setLookingAtExchangeItems(false);
+			
+			hp.restoreInventory((Player) e.getPlayer());
+			
 		}
 		
 	}
@@ -139,9 +170,6 @@ public class InventoryManagement implements Listener{
 						return;
 					}
 					
-					
-					Raid.log("Looking to buy...");
-					
 					int indexPosition = -99;
 					String uuid = null;
 					
@@ -174,17 +202,25 @@ public class InventoryManagement implements Listener{
 						return;
 					}
 					
+					// Get the balance.
+					// Remove their existing currency.
+					// Add the new amount.
+					
 					if(Raid.UTIL.getPlayersBalanceInInventory((Player)e.getWhoClicked()) >= ei.getSellingCost()){
 					
+					int balance = Raid.UTIL.removePlayersInventoryBalance((Player)e.getWhoClicked());		
+						
 					ItemStack item = ge.purchaseItemFromExchange(ei);
 					
 					((Player) e.getWhoClicked()).sendMessage(ExchangeCommand.EXCHANGE_PREFIX + ChatColor.GREEN + 
 							" Successfully bought " + ei.getItemType() + " x" + ei.getAmount() + " from the Exchange "
 									+ ei.getTradingTranslation() + ".");
 					
-					Raid.UTIL.deductFromPlayersInventory((Player)e.getWhoClicked(), ei.getSellingCost());
+					Raid.log("Balance: " + balance + ", Payout: " + (balance - ei.getSellingCost()));
 					
-					e.getWhoClicked().getInventory().addItem(item);
+					Raid.UTIL.givePlayerItem((Player)e.getWhoClicked(), item);
+					
+					Raid.UTIL.payOutPlayer((Player)e.getWhoClicked(), balance - ei.getSellingCost());
 					
 					e.getInventory().remove(is);
 					((Player) e.getWhoClicked()).updateInventory();

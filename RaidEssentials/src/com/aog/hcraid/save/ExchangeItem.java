@@ -17,8 +17,8 @@ import com.aog.hcraid.Util;
 public class ExchangeItem extends SavedItem{
 	
 	private static final long serialVersionUID = 5286410047450203281L;
-	private static final int SILVER_WORTH = 16;
-	private static final int GOLD_WORTH = 256;
+	public static final int SILVER_WORTH = 16;
+	public static final int GOLD_WORTH = 256;
 	private int id;
 	private WeaponRarity rarity;
 	private long addedDate;
