@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
+import org.apache.commons.lang.WordUtils;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -196,7 +198,11 @@ public class GrandExchange implements Serializable{
 		
 		HCPlayer hp = Raid.UTIL.getPlayer(Raid.UTIL.getPlayer(ei.getSellerId()));
 		
-		hp.addMoneyToWithdraw(ei.getSellingCost());
+		hp.addMoneyToTraderAccount(ei.getSellingCost());
+		
+		hp.addMessage(ChatColor.YELLOW + " Sold " + WordUtils.capitalize(
+				ei.getItemType().toString().toLowerCase().replaceAll("_", " "))
+				+ " for " + Raid.UTIL.getTranslationForCurrency(ei.getSellingCost()));
 		
 		return ei.toBukkitItemStack();
 		

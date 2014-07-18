@@ -1,11 +1,20 @@
 name: HcRaid
-version: 1_a
+version: 1_c
 main: com.aog.hcraid.Raid
 author: danslayerx
 description: Main compliance with HcRaid
 commands:
    rdebug:
       description: Debug command for Raid
+   deposit:
+      description: Debug command for Raid
+      aliases: [dp, d]
+   withdraw:
+      description: Debug command for Raid
+      aliases: [wd, w]
+   balance:
+      description: Debug command for Raid
+      aliases: [bal,gb]
    ge:
       description: Grand Exchange command, used to access the Grand Exchange.
       aliases: [exchange,grandexchange,shop,buy]

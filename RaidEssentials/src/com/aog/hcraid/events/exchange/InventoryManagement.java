@@ -10,10 +10,12 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -93,7 +95,8 @@ public class InventoryManagement implements Listener{
 					
 					for(ExchangeItem ei : eil){
 						
-						if(ei.getIndexValue() == indexPosition){
+						if(ei.getIndexValue() == indexPosition
+								&& ei.getItemType() == is.getType()){
 							exch = ei;
 							break;
 						}
@@ -147,6 +150,45 @@ public class InventoryManagement implements Listener{
 		
 		if(hp != null && hp.getManagement().isLookingAtOwnListedItems()){
 			e.setCancelled(true);
+		}
+		
+	}
+	
+	@EventHandler
+	public void itemPickUP(PlayerPickupItemEvent e){
+		
+		
+		HCPlayer hp = Raid.UTIL.getPlayer(e.getPlayer());
+		
+		if(hp != null && hp.getManagement().isLookingAtOwnListedItems()){
+			e.setCancelled(true);
+		}
+		
+	}
+	
+	@EventHandler
+	public void playerDamage(EntityDamageEvent e){
+		
+		if(e.getEntity() instanceof Player){
+		
+			HCPlayer hp = Raid.UTIL.getPlayer((Player) e.getEntity());
+
+			if (hp != null
+					&& (hp.getManagement().isLookingAtOwnListedItems()
+							|| hp.getManagement().isLookingAtRemovingItems() || hp
+							.getManagement().isLookingAtExchangeItems())) {
+				hp.getManagement().setLookingAtOwnListedItems(false);
+				hp.getManagement().setLookingAtRemovingItems(false);
+				hp.getManagement().setLookingAtExchangeItems(false);
+
+				Player p = (Player) e.getEntity();
+				
+				p.closeInventory();
+				
+				hp.restoreInventory((Player) e.getEntity());
+			
+			}
+		
 		}
 		
 	}
@@ -206,9 +248,11 @@ public class InventoryManagement implements Listener{
 					// Remove their existing currency.
 					// Add the new amount.
 					
-					if(Raid.UTIL.getPlayersBalanceInInventory((Player)e.getWhoClicked()) >= ei.getSellingCost()){
+					if(hp.getInventoryBalance() >= ei.getSellingCost()){
 					
-					int balance = Raid.UTIL.removePlayersInventoryBalance((Player)e.getWhoClicked());		
+					hp.setInventoryBalance(hp.getInventoryBalance()-ei.getSellingCost());
+						
+					//int balance = Raid.UTIL.removePlayersInventoryBalance((Player)e.getWhoClicked());		
 						
 					ItemStack item = ge.purchaseItemFromExchange(ei);
 					
@@ -216,11 +260,11 @@ public class InventoryManagement implements Listener{
 							" Successfully bought " + ei.getItemType() + " x" + ei.getAmount() + " from the Exchange "
 									+ ei.getTradingTranslation() + ".");
 					
-					Raid.log("Balance: " + balance + ", Payout: " + (balance - ei.getSellingCost()));
+					//Raid.log("Balance: " + balance + ", Payout: " + (balance - ei.getSellingCost()));
 					
-					Raid.UTIL.givePlayerItem((Player)e.getWhoClicked(), item);
+					//Raid.UTIL.givePlayerItem((Player)e.getWhoClicked(), item);
 					
-					Raid.UTIL.payOutPlayer((Player)e.getWhoClicked(), balance - ei.getSellingCost());
+					hp.addItemToReturn(item);
 					
 					e.getInventory().remove(is);
 					((Player) e.getWhoClicked()).updateInventory();

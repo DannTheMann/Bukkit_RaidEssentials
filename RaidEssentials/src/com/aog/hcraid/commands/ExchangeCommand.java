@@ -26,7 +26,7 @@ public class ExchangeCommand implements CommandExecutor{
 			+ ChatColor.GRAY;
 	
 	private static final String[] assholes = {"iphonetips1", "obaid_786", "AmunitionX"};
-	private static final Material[] unsellable = {Material.GOLD_INGOT, Material.BRICK, Material.IRON_INGOT};
+	private static final Material[] unsellable = {Material.GOLD_INGOT, Material.GOLD_BLOCK, Material.IRON_BLOCK, Material.CLAY_BRICK, Material.IRON_INGOT};
 
 	@Override
 	public boolean onCommand(CommandSender s, Command c, String l,
@@ -124,13 +124,13 @@ public class ExchangeCommand implements CommandExecutor{
 				}
 				
 				e.addItemToExchange(p.getItemInHand(), total, p.getUniqueId().toString());
-
+				
 				p.sendMessage(EXCHANGE_PREFIX + ChatColor.GREEN + " Success! You've put '" + 
 						WordUtils.capitalize(p.getItemInHand().getType().toString()
 								.toLowerCase().replaceAll("_", " "))
 								+ ":" + p.getItemInHand().getDurability()+
 										" x" + p.getItemInHand().getAmount() + "' on the market.");
-				p.sendMessage(ChatColor.GOLD + " Gold: " + totalGold);
+				p.sendMessage(ChatColor.DARK_GREEN + "" + ChatColor.GOLD + " Gold: " + totalGold);
 				p.sendMessage(ChatColor.GRAY + " Silver: " + totalSilver);
 				p.sendMessage(ChatColor.RED + " Bronze: " + totalBronze);
 				
@@ -203,6 +203,8 @@ public class ExchangeCommand implements CommandExecutor{
 						
 					}
 					
+					hp.setInventoryBalance(Raid.UTIL.getPlayersBalanceInInventory(p));
+					Raid.UTIL.removePlayersInventoryBalance(p);
 					p.openInventory(inv);
 					hp.getManagement().setLookingAtExchangeItems(true);
 					hp.setInventory(p.getInventory());
@@ -210,6 +212,7 @@ public class ExchangeCommand implements CommandExecutor{
 					
 				}else{
 					p.sendMessage(EXCHANGE_PREFIX + ChatColor.YELLOW + "Search for an item you want.");
+					p.sendMessage(ChatColor.AQUA + " Here are some examples of how to use this command.");
 					p.sendMessage(ChatColor.GRAY + " - /ge check <itemID / item name> [Rarity]");
 					p.sendMessage(ChatColor.GRAY + " > /ge check stone - Checks for all stone blocks.");
 					p.sendMessage(ChatColor.GRAY + " - /ge check 276 - Searches for all diamond swords.");
@@ -361,7 +364,7 @@ public class ExchangeCommand implements CommandExecutor{
 					return true;
 				}
 				p.sendMessage(ChatColor.GRAY + " > Cheapest Selling Price: " + ei[0].getTradingTranslation());
-				p.sendMessage(ChatColor.GRAY + " > Cheapest Amount for sale: " + ei[0].getAmount());
+				p.sendMessage(ChatColor.GRAY + " > Cheapest Quantity for sale: " + ei[0].getAmount());
 				p.sendMessage(ChatColor.GRAY + " > Total being sold: " + ei.length);
 				p.sendMessage(ChatColor.GRAY + " > Alias: " + Raid.UTIL.getItemAliases(itemToCheck.getType()));
 				

@@ -119,7 +119,7 @@ public class ExchangeItem extends SavedItem{
 			add("Selling Price: " + getTradingTranslation());
 			add("Removal date: " + sdf.format(new Date(removalDate*1000)));
 			add("Index Value: " + id);
-			add("Sold by: " + Bukkit.getPlayer(UUID.fromString(uuidSeller)).getName());
+			add("Sold by: " + Bukkit.getOfflinePlayer(UUID.fromString(uuidSeller)).getName());
 			add("Seller ID: " + uuidSeller);
 			
 		}});

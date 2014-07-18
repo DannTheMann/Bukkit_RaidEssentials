@@ -2,11 +2,20 @@ package com.aog.hcraid.commands;
 
 import java.util.HashMap;
 
+import net.minecraft.server.v1_7_R3.EntityCreature;
+import net.minecraft.server.v1_7_R3.PathEntity;
+
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_7_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_7_R3.entity.CraftCreature;
+import org.bukkit.entity.Bat;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import com.aog.hcraid.Raid;
@@ -123,6 +132,34 @@ public class DebugCommand implements CommandExecutor{
 					p.sendMessage("Players: " + isNull(Raid.UTIL.getRaidData().getPlayers()));
 					GrandExchange e = Raid.UTIL.getRaidData().getExchange();
 					p.sendMessage("Exchange HashMap Items: " + isNull(e.getItems()));
+					
+				}else if(args[0].equalsIgnoreCase("path")){
+					
+					for(Entity e : p.getNearbyEntities(50, 50, 50)){
+					
+						if(e instanceof LivingEntity && (!(e instanceof Player || e instanceof Bat))){
+						Location cs = p.getLocation();
+
+						EntityCreature ec = ((CraftCreature) e).getHandle();
+
+						float speed = 0.9f;
+						
+						PathEntity pf = ((CraftWorld) cs.getWorld())
+								.getHandle().a(ec, cs.getBlockX(),
+										cs.getBlockY(), cs.getBlockZ(), speed,
+										true, false, false, true);
+
+						ec.setPathEntity(pf);
+						ec.getNavigation().a(cs.getBlockX(), cs.getBlockY(),
+								cs.getBlockZ(), speed);
+
+						//Creature creature = (Creature) e;
+							//creature.setTarget(e);   
+						
+							p.sendMessage("Moving " + e.getType() + " towards you.");
+						}
+			        
+					}
 					
 				}				
 			}

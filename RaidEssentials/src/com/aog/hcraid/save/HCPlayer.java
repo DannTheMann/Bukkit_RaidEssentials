@@ -9,11 +9,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 
 import com.aog.hcraid.Raid;
 import com.aog.hcraid.commands.CurrencyCommand;
@@ -31,7 +30,10 @@ public class HCPlayer implements Serializable {
 	private ArrayList<String> messagesForReturn = new ArrayList<>();
 	private ArrayList<SavedItem> itemsToReturn = new ArrayList<SavedItem>();
 	private HashMap<Integer, SavedItem> inventorySave = new HashMap<Integer, SavedItem>();
+	//private Inventory exchangeInventory;
 	private int moneyToWithdraw;
+	private int inventoryBalance;
+	private int tradingAccount;
 
 	public HCPlayer(Player p){
 		Raid.UTIL.getUUID(p);
@@ -62,6 +64,11 @@ public class HCPlayer implements Serializable {
 	}
 
 	public void addItemToReturn(ItemStack bukkitItemStack) {
+		
+		if(bukkitItemStack == null ||bukkitItemStack.getAmount() <= 0 || bukkitItemStack.getType() == Material.AIR){
+			return;
+		}
+		
 		itemsToReturn.add(new SavedItem(bukkitItemStack));
 	}
 	
@@ -103,6 +110,15 @@ public class HCPlayer implements Serializable {
 		
 		
 		inventory.clear();
+		
+		ItemStack is = new ItemStack(Material.STAINED_GLASS_PANE);
+		is.setDurability((short) 8);
+		
+		for(int i = 0; i < inventory.getSize(); i++){
+			inventory.setItem(i, is);
+		}
+		
+		//exchangeInventory = inventory;
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -114,25 +130,37 @@ public class HCPlayer implements Serializable {
 			
 			@Override
 			public void run() {
-
+				
 				if(p == null || !p.isOnline()){
-					for(int i : inventorySave.keySet()){
-						p.getInventory().setItem(i, inventorySave.get(i).toBukkitItemStack());
+					for(SavedItem is : inventorySave.values()){
+						itemsToReturn.add(is);
 					}
 					return;
+				}
+				
+				for(int i = 0; i < p.getInventory().getSize(); i++){
+					p.getInventory().setItem(i, null);
 				}
 				
 				for(int i : inventorySave.keySet()){
 					p.getInventory().setItem(i, inventorySave.get(i).toBukkitItemStack());
 				}
 				
+				for(SavedItem is : itemsToReturn){
+					Raid.UTIL.givePlayerItem(p, is.toBukkitItemStack());
+				}
+				
+				itemsToReturn.clear();
+				
 				Raid.log("size: " + inventorySave.size());
 				
 				inventorySave.clear();
+				
+				Raid.UTIL.payOutPlayer(p, getInventoryBalance());
+				setInventoryBalance(0);
+				p.updateInventory();
 			}
-		}.runTaskLater(Raid.UTIL.getPlugin(), 2);
-		
-		p.updateInventory();	
+		}.runTaskLater(Raid.UTIL.getPlugin(), 2);	
 		
 	}
 
@@ -147,6 +175,12 @@ public class HCPlayer implements Serializable {
 	}
 
 	public void addMessage(String string) {
+		
+		if(Raid.UTIL.getPlayer(this) != null && Raid.UTIL.getPlayer(this).isOnline()){
+			message(string);
+			return;
+		}
+		
 		messagesForReturn.add(string);
 	}
 	
@@ -158,13 +192,13 @@ public class HCPlayer implements Serializable {
 
 	public void withdrawMoney(int total) {
 		
-		moneyToWithdraw =- total;
+		moneyToWithdraw -= total;
 		
 		if(moneyToWithdraw < 0){
 			moneyToWithdraw = 0;
 		}
 		
-		Raid.UTIL.payOutPlayer(Raid.UTIL.getPlayer(uniqueId), moneyToWithdraw);
+		Raid.UTIL.payOutPlayer(Raid.UTIL.getPlayer(uniqueId), total);
 		
 		message(CurrencyCommand.CURRENCY_PREFIX + ChatColor.GREEN + " You've withdrawed " +
 				Raid.UTIL.getTranslationForCurrency(total));
@@ -176,6 +210,72 @@ public class HCPlayer implements Serializable {
 		if(p != null){
 			p.sendMessage(string);
 		}
+	}
+
+	public ArrayList<ItemStack> getTemporaryInventory() {
+		
+		ArrayList<ItemStack> is = new ArrayList<ItemStack>();
+		
+		for(SavedItem si : inventorySave.values())
+			is.add(si.toBukkitItemStack());
+		
+		return is;
+		
+	}
+
+	public int getInventoryBalance() {
+		return inventoryBalance;
+	}
+
+	public void setInventoryBalance(int inventoryBalance) {
+		this.inventoryBalance = inventoryBalance;
+	}
+
+	public void setWithdrawMoney(int returnValue) {
+		this.moneyToWithdraw = returnValue;
+	}
+
+	public void addMoneyToTraderAccount(int sellingCost) {
+		tradingAccount += sellingCost;
+	}
+	
+	public int getTraderAccount(){
+		return tradingAccount;
+	}
+	
+	public void clearTraderAccount(){
+		tradingAccount = 0;
+	}
+
+	public void payOutTradeAccount() {
+		
+		final Player p = Raid.UTIL.getPlayer(this);
+	
+		if(tradingAccount <= 0){
+			return;
+		}
+		
+		p.sendMessage(CurrencyCommand.CURRENCY_PREFIX + ChatColor.RED + " WARNING.");
+		p.sendMessage(ChatColor.YELLOW + " --- You will be paid VIA you're trading account in 30 seconds, if you're inventory is full move now to a safe location" +
+				" or log off. You've been warned!");
+		
+		new BukkitRunnable() {
+			
+			@Override
+			public void run() {
+				
+				if(p == null || !p.isOnline()){
+					return;
+				}
+				
+				Raid.UTIL.payOutPlayer(p, tradingAccount);
+				p.sendMessage(CurrencyCommand.CURRENCY_PREFIX + ChatColor.YELLOW + "Paid out VIA Trading Account - " + 
+				Raid.UTIL.getTranslationForCurrency(tradingAccount));
+				
+				tradingAccount = 0;	
+			}
+		}.runTaskLater(Raid.UTIL.getPlugin(), 600);
+		
 	}
 	
 	/*

@@ -2,8 +2,10 @@ package com.aog.hcraid;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -15,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.aog.hcraid.commands.CurrencyCommand;
 import com.aog.hcraid.commands.DebugCommand;
 import com.aog.hcraid.commands.ExchangeCommand;
 import com.aog.hcraid.events.exchange.InventoryManagement;
@@ -89,6 +92,10 @@ public class Util {
 	private void registerCommands() {
 		plugin.getServer().getPluginCommand("ge").setExecutor(new ExchangeCommand());
 		plugin.getServer().getPluginCommand("rdebug").setExecutor(new DebugCommand());
+		plugin.getServer().getPluginCommand("deposit").setExecutor(new CurrencyCommand());
+		plugin.getServer().getPluginCommand("withdraw").setExecutor(new CurrencyCommand());
+		plugin.getServer().getPluginCommand("balance").setExecutor(new CurrencyCommand());
+		
 	}
 
 	private void registerEvents() {
@@ -186,6 +193,37 @@ public class Util {
 		}
 		
 		return "";
+		
+	}
+	
+	public String getSpecificLoreOfItem(String toSeparate, ItemStack is){
+		
+		if(is != null && is.getItemMeta() != null){
+			
+			ItemMeta im = is.getItemMeta();
+			
+			if(im.getLore() == null){
+				return "";
+			}
+			
+			for(String u : im.getLore()){
+				
+				if(u.split(toSeparate).length > 1){
+					return u.split(toSeparate)[1];
+				}
+				
+			}
+		}
+		
+		return "";
+		
+	}
+	
+	public ChatColor getRandomColour(){
+		
+		int rand = new Random().nextInt(ChatColor.values().length);
+		
+		return ChatColor.values()[rand];
 		
 	}
 
@@ -346,9 +384,24 @@ public class Util {
 
 	public int getPlayersBalanceInInventory(Player p) {
 		
+		HCPlayer hp = getPlayer(p);
+		Collection<ItemStack> inv = null;
+		
+		if(hp.getManagement().isLookingAtExchangeItems() || hp.getManagement().isLookingAtRemovingItems()){
+			inv = hp.getTemporaryInventory();
+		}else{
+			
+			inv = new ArrayList<ItemStack>();
+			
+			for(ItemStack i : p.getInventory())
+				if(i != null)
+					inv.add(i);
+			
+		}
+		
 		int points = 0;
 		
-		for(ItemStack i : p.getInventory()){
+		for(ItemStack i : inv){
 			if (i != null) {
 				if (i.getType() == Material.GOLD_INGOT) {
 					points += 256 * i.getAmount();
@@ -365,10 +418,25 @@ public class Util {
 	@SuppressWarnings("deprecation")
 	public void deductFromPlayersInventory(Player p, int sellingCost) {
 		
+		HCPlayer hp = getPlayer(p);
+		Collection<ItemStack> inv = null;
+		
+		if(hp.getManagement().isLookingAtExchangeItems() || hp.getManagement().isLookingAtRemovingItems()){
+			inv = hp.getTemporaryInventory();
+		}else{
+			
+			inv = new ArrayList<ItemStack>();
+			
+			for(ItemStack i : p.getInventory())
+				if(i != null)
+					inv.add(i);
+			
+		}
+		
 		Raid.log("Deducting...");
 		Raid.log("Cost = " + sellingCost);
 		
-		for(ItemStack i : p.getInventory()){
+		for(ItemStack i : inv){
 			if ( i == null) { continue; }
 			if(i.getType() == Material.GOLD_INGOT){
 				if(sellingCost >= 256){
@@ -525,9 +593,25 @@ public class Util {
 
 	@SuppressWarnings("deprecation")
 	public int removePlayersInventoryBalance(Player p) {
+		
+		HCPlayer hp = getPlayer(p);
+		Collection<ItemStack> inv = null;
+		
+		if(hp.getManagement().isLookingAtExchangeItems() || hp.getManagement().isLookingAtRemovingItems()){
+			inv = hp.getTemporaryInventory();
+		}else{
+		
+			inv = new ArrayList<ItemStack>();
+			
+			for(ItemStack i : p.getInventory())
+				if(i != null)
+					inv.add(i);
+			
+		}
+		
 		int points = 0;
 		
-		for(ItemStack i : p.getInventory()){
+		for(ItemStack i : inv){
 			if (i != null) {
 				if (i.getType() == Material.GOLD_INGOT) {
 					points += 256 * i.getAmount();
@@ -572,13 +656,28 @@ public class Util {
 			
 		}
 		
-		givePlayerItem(p, getGold(gold));
-		givePlayerItem(p, getSilver(silver));
-		givePlayerItem(p, getBronze(bronze));
+		HCPlayer hp = getPlayer(p);
+		
+		Collection<ItemStack> inv = null;
+		
+		if(hp.getManagement().isLookingAtExchangeItems() || hp.getManagement().isLookingAtRemovingItems()){
+			hp.addItemToReturn(getGold(gold));
+			hp.addItemToReturn(getSilver(silver));
+			hp.addItemToReturn(getBronze(bronze));
+		}else{
+			givePlayerItem(p, getGold(gold));
+			givePlayerItem(p, getSilver(silver));
+			givePlayerItem(p, getBronze(bronze));
+		}
 		
 	}
 
 	public void givePlayerItem(Player p, ItemStack item) {
+		
+		if(!p.isOnline()){
+			returnItemToOfflinePlayer(item, p.getUniqueId().toString());
+			return;
+		}
 		
 		if(item.getAmount() == 0){
 			return;
@@ -595,9 +694,8 @@ public class Util {
 		
 	}
 
+	@SuppressWarnings("deprecation")
 	public Material getItemAlias(String a2) {
-		
-		HashMap<Material, ArrayList<String>> map = alias.getAlias();
 		
 		for(Material m : alias.getAlias().keySet()){
 			
@@ -657,6 +755,17 @@ public class Util {
 	public Player getPlayer(HCPlayer hcPlayer) {
 		
 		return Bukkit.getPlayer(UUID.fromString(hcPlayer.getUniqueId()));
+		
+	}
+
+	@SuppressWarnings("deprecation")
+	public String getPlayerFromName(String name) {
+		
+		if(Bukkit.getPlayer(name) != null){
+			return Bukkit.getPlayer(name).getUniqueId().toString();
+		}		
+
+		return null;
 		
 	}
 

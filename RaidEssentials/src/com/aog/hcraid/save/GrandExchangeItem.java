@@ -18,7 +18,7 @@ public class GrandExchangeItem implements Serializable{
 	private static final long serialVersionUID = -2440239323457903581L;
 
 	private HashMap<String, ArrayList<ExchangeItem>> playerTrade = new HashMap<>();
-	private static final Material[] unsellable = {Material.GOLD_INGOT, Material.BRICK, Material.IRON_INGOT};
+	private static final Material[] unsellable = {Material.GOLD_INGOT, Material.CLAY_BRICK, Material.IRON_INGOT};
 	
 	/**
 	 * Withdraws an item from the Exchange by ID.
@@ -48,7 +48,9 @@ public class GrandExchangeItem implements Serializable{
 		
 		 item.setSold();
 		 
-		 Raid.UTIL.returnItem(item.toBukkitItemStack(), Bukkit.getPlayer(UUID.fromString(item.getSellerId())));
+		 Raid.UTIL.getRaidData().getPlayers().get(uuid).addItemToReturn(item.toBukkitItemStack());
+		 
+		 //Raid.UTIL.returnItem(item.toBukkitItemStack(), Bukkit.getPlayer(UUID.fromString(item.getSellerId())));
 		
 		return true;
 		
@@ -225,7 +227,29 @@ public class GrandExchangeItem implements Serializable{
 
 	public void removeExchangeItem(ExchangeItem ei) {
 		
-		playerTrade.get(ei.getSellerId()).remove(ei);
+		ArrayList<ExchangeItem> items = playerTrade.get(ei.getSellerId());
+		
+		if(items == null){
+			return;
+		}
+		
+		ExchangeItem item = getExchangeItemById(ei.getSellingId(), items);
+		
+		if(item == null){
+			Raid.log("Item is false");
+			return;
+		}
+		
+		 Raid.UTIL.getRaidData().getPlayers().get(ei.getSellerId()).removeItemForSale(item);
+		 
+		 items.remove(item);
+		
+		 item.setSold();
+		 
+		 //Raid.UTIL.getRaidData().getPlayers().get(uuid).addItemToReturn(item.toBukkitItemStack());
+		 
+		 //Raid.UTIL.returnItem(item.toBukkitItemStack(), Bukkit.getPlayer(UUID.fromString(item.getSellerId())));
+		
 		
 	}
 

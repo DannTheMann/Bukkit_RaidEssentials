@@ -8,6 +8,7 @@ import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import com.aog.hcraid.Raid;
+import com.aog.hcraid.save.HCPlayer;
 import com.aog.hcraid.serial_file.SaveData;
 
 public class PlayerConnectionEvents implements Listener{
@@ -20,6 +21,12 @@ public class PlayerConnectionEvents implements Listener{
 		Raid.UTIL.addPlayer(e.getPlayer());
 		
 		Raid.UTIL.getRaidData().taxPlayers();
+		
+		HCPlayer hp = Raid.UTIL.getPlayer(e.getPlayer());
+		
+		hp.printOfflineMessages();
+		
+		hp.payOutTradeAccount();
 		
 	}
 	

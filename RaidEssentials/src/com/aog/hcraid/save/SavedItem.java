@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang.WordUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 
 public class SavedItem implements Serializable{
@@ -46,7 +48,7 @@ public class SavedItem implements Serializable{
 		if(is.getItemMeta().getDisplayName() != null)
 			this.setName(is.getItemMeta().getDisplayName());
 		if(is.getItemMeta().getLore() != null)
-			this.setLore(is.getItemMeta().getLore());
+			this.setLore(is.getItemMeta().getLore());	
 		
 		for(Enchantment e : is.getEnchantments().keySet())
 			this.enchantments.put(e.getId(), is.getEnchantmentLevel(e));
@@ -142,15 +144,21 @@ public class SavedItem implements Serializable{
 		is.setAmount(this.amount);
 		is.setDurability(this.durability);
 		is.getData().setData(this.data);
-		if(this.name != null)
-			is.getItemMeta().setDisplayName(this.name);
-		if(this.lore != null)
-			is.getItemMeta().setLore(this.lore);
 		
+		ItemMeta im = is.getItemMeta();
+		
+		if(this.name != null){
+			im.setDisplayName(this.name);
+		}
+		if(this.lore != null){
+			im.setLore(this.lore);
+		}
+		
+		is.setItemMeta(im);
+	
 		for(Integer i : this.enchantments.keySet()){
 			is.addUnsafeEnchantment(Enchantment.getById(i), this.enchantments.get(i));
 		}
-			
 		
 		return is;
 	}
